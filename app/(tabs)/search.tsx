@@ -1,10 +1,10 @@
 import { Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Index() {
+export default function Search() {
   return (
     <SafeAreaView>
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Text>Search</Text>
     </SafeAreaView>
   );
 }

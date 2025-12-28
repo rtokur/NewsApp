@@ -13,15 +13,17 @@ export default function RootLayout() {
       <>
       <CircleButton
       icon='search'
-      onPress={() => router.push('../search')}
+      onPress={() => router.push('/search')}
       style={{marginRight: 10}}/>
 
       <CircleButton 
       icon='bell'
-      onPress={() => router.push('../notifications')}/>
+      onPress={() => router.push('/notifications')}/>
       </>
     ),
+    headerTitle: '',
   }}
-  />
+  >
+  </Stack>
 );
 }
