@@ -1,16 +1,23 @@
 import { View } from "react-native";
 
 interface Props {
-    length: number;
-    activeIndex: number;
+  length: number;
+  activeIndex: number;
 }
-  
+
 export function PaginationDots({ length, activeIndex }: Props) {
-    return (
-      <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10,marginBottom: 20 }}>
-        {Array.from({ length }).map((_, index) => {
-            const isActive = index === activeIndex;
-            return(
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: 10,
+        marginBottom: 20,
+      }}
+    >
+      {Array.from({ length }).map((_, index) => {
+        const isActive = index === activeIndex;
+        return (
           <View
             key={index}
             style={{
@@ -20,8 +27,9 @@ export function PaginationDots({ length, activeIndex }: Props) {
               marginHorizontal: 2,
               backgroundColor: index === activeIndex ? "#007AFF" : "#ccc",
             }}
-          />)
-        })}
-      </View>
-    );
+          />
+        );
+      })}
+    </View>
+  );
 }

@@ -1,5 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Animated, ImageBackground, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 interface Props {
   item: any;
@@ -17,20 +24,23 @@ export function BreakingNewsCard({ item, scale, width }: Props) {
             style={styles.image}
             imageStyle={styles.imageRadius}
           >
-            <LinearGradient 
-            colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.20)', 'rgba(0,0,0,0.75)']} 
-            locations={[0, 0.60, 1]} 
-            style={StyleSheet.absoluteFill} />
+            <LinearGradient
+              colors={[
+                "rgba(0,0,0,0.55)",
+                "rgba(0,0,0,0.20)",
+                "rgba(0,0,0,0.75)",
+              ]}
+              locations={[0, 0.6, 1]}
+              style={StyleSheet.absoluteFill}
+            />
             <Text style={styles.category}>{item.category}</Text>
-            <View style = {styles.cardSourceContainer}>
-              <Text style = {styles.cardSourceName}>{item.sourceName}</Text>
+            <View style={styles.cardSourceContainer}>
+              <Text style={styles.cardSourceName}>{item.sourceName}</Text>
               <Text style={styles.dot}>•</Text>
               <Text style={styles.date}>{item.date}</Text>
             </View>
-            
-            <Text 
-              style={styles.cardTitle} 
-              numberOfLines={2}>
+
+            <Text style={styles.cardTitle} numberOfLines={2}>
               {item.title}
             </Text>
           </ImageBackground>
@@ -45,59 +55,59 @@ const styles = StyleSheet.create({
     height: 200,
     marginTop: 10,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
   cardInner: {
     flex: 1,
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   image: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     padding: 15,
   },
   imageRadius: {
     borderRadius: 20,
   },
   category: {
-    position: 'absolute',
+    position: "absolute",
     top: 15,
     left: 15,
-    backgroundColor: '#007AFF',
-    color: '#FFF',
+    backgroundColor: "#007AFF",
+    color: "#FFF",
     paddingHorizontal: 15,
     paddingVertical: 5,
     borderRadius: 15,
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#FFF',
+    fontWeight: "500",
+    color: "#FFF",
     marginTop: 2,
   },
   cardSourceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   cardSourceName: {
     fontSize: 13,
-    fontWeight: '300',
-    color: '#FFF',
+    fontWeight: "300",
+    color: "#FFF",
   },
   dot: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#FFF',
+    fontWeight: "800",
+    color: "#FFF",
     marginHorizontal: 8,
   },
   date: {
     fontSize: 13,
-    fontWeight: '300',
-    color: '#FFF',
-  }
+    fontWeight: "300",
+    color: "#FFF",
+  },
 });
