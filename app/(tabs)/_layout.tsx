@@ -1,4 +1,5 @@
 import { CircleButton } from "@/src/components/CircleButton";
+import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { Tabs, router } from "expo-router";
@@ -46,7 +47,7 @@ export default function TabsLayout() {
               />
               <CircleButton
                 icon="bell"
-                onPress={() => router.push("/notifications")}
+                onPress={() => router.push("/favorites")}
                 style={{ marginRight: 15, marginBottom: 10 }}
               />
             </>
@@ -106,7 +107,7 @@ export default function TabsLayout() {
                 <Text
                   style={{
                     color: "#fff",
-                    marginLeft: 8,
+                    marginLeft: 6,
                     fontSize: 12,
                     fontWeight: "500",
                   }}
@@ -119,7 +120,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="favorites"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -132,8 +133,8 @@ export default function TabsLayout() {
                 justifyContent: "center",
               }}
             >
-              <FontAwesome
-                name="bell"
+              <Feather
+                name="bookmark"
                 size={21}
                 color={focused ? "#fff" : "#6B7280"}
               />
@@ -141,12 +142,12 @@ export default function TabsLayout() {
                 <Text
                   style={{
                     color: "#fff",
-                    marginLeft: 8,
+                    marginLeft: 6,
                     fontSize: 12,
                     fontWeight: "500",
                   }}
                 >
-                  Alerts
+                  Favorites
                 </Text>
               )}
             </View>

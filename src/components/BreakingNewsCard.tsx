@@ -12,12 +12,13 @@ interface Props {
   item: any;
   scale: Animated.AnimatedInterpolation<number>;
   width: number;
+  onPress?: () => void;
 }
 
-export function BreakingNewsCard({ item, scale, width }: Props) {
+export function BreakingNewsCard({ item, scale, width, onPress }: Props) {
   return (
     <Animated.View style={{ width, transform: [{ scale }] }}>
-      <Pressable style={styles.card}>
+      <Pressable style={styles.card} onPress={onPress}>
         <View style={styles.cardInner}>
           <ImageBackground
             source={{ uri: item.image }}
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 15,
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: "500",
   },
   cardTitle: {
     fontSize: 16,

@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useRef, useState } from "react";
 import { Animated, Dimensions, FlatList, View } from "react-native";
 import { BreakingNewsCard } from "./BreakingNewsCard";
@@ -83,7 +84,9 @@ export function BreakingNewsCarousel({ data }: Props) {
           });
 
           return (
-            <BreakingNewsCard item={item} scale={scale} width={CARD_WIDTH} />
+            <BreakingNewsCard item={item} scale={scale} width={CARD_WIDTH} onPress={() =>
+              router.push({ pathname: "/news/[id]", params: { id: item.id } })
+            } />
           );
         }}
       />

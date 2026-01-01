@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { FlatList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BreakingNewsCarousel } from "../components/BreakingNewsCarousel";
@@ -12,7 +13,7 @@ export default function HomeScreen() {
       <FlatList
         data={newsList}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NewsListItem item={item} />}
+        renderItem={({ item }) => <NewsListItem item={item} onPress={() => router.push({ pathname: "/news/[id]", params: { id: item.id } })}/>}
         ListHeaderComponent={
           <>
             <SectionHeader

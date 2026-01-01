@@ -1,36 +1,13 @@
 import { FlatList, Pressable, StyleSheet, Text } from "react-native";
-
-type Category = {
-  id: string;
-  name: string;
-};
+import { categories } from "../data/categories";
+import { CategoryName } from "../hooks/useFilteredNews";
 
 interface Props {
-  categories: Category[];
-  selectedCategory: string;
-  onSelect: (category: string) => void;
+  selectedCategory: CategoryName;
+  onSelect: (category: CategoryName) => void;
 }
 
-export default function CategoryList({
-  categories,
-  selectedCategory,
-  onSelect,
-}: Props) {
-  const renderItem = ({ item }: { item: Category }) => {
-    const isActive = selectedCategory === item.name;
-
-    return (
-      <Pressable
-        onPress={() => onSelect(item.name)}
-        style={[styles.item, isActive && styles.itemActive]}
-      >
-        <Text style={[styles.text, isActive && styles.textActive]}>
-          {item.name}
-        </Text>
-      </Pressable>
-    );
-  };
-
+export default function CategoryList({ selectedCategory, onSelect }: Props) {
   return (
     <FlatList
       data={categories}
@@ -38,7 +15,19 @@ export default function CategoryList({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
-      renderItem={renderItem}
+      renderItem={({ item }) => {
+        const isActive = selectedCategory === item.name;
+        return (
+          <Pressable
+            onPress={() => onSelect(item.name as CategoryName)}
+            style={[styles.item, isActive && styles.itemActive]}
+          >
+            <Text style={[styles.text, isActive && styles.textActive]}>
+              {item.name}
+            </Text>
+          </Pressable>
+        );
+      }}
     />
   );
 }

@@ -1,10 +1,10 @@
 import { Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Notifications() {
+export default function Favorites() {
   return (
     <SafeAreaView>
-      <Text>Notifications</Text>
+      <Text>Favorites</Text>
     </SafeAreaView>
   );
 }

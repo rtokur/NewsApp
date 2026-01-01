@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   item: {
@@ -9,11 +9,15 @@ type Props = {
     sourceName: string;
     date: string;
   };
+  onPress: () => void;
 };
 
-export default function NewsListItem({ item }: Props) {
+export default function NewsListItem({ item, onPress }: Props) {
   return (
-    <View style={styles.container}>
+    <Pressable 
+    style={styles.container}
+    onPress={onPress}
+    >
       <Image source={{ uri: item.image }} style={styles.thumbnail} />
 
       <View style={styles.content}>
@@ -28,7 +32,7 @@ export default function NewsListItem({ item }: Props) {
           <Text style={styles.date}>{item.date}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
