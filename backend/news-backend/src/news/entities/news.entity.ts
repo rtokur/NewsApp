@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { Category } from '../categories/category.entity';
+import { Category } from '../../categories/entities';
 
 @Entity('news')
 export class News {
@@ -15,10 +15,16 @@ export class News {
   @Column()
   imageUrl: string;
 
+  @Column()
+  source: string;
+
+  @Column()
+  sourceLogoUrl: string;
+
   @Column({ type: 'timestamptz'})
   publishedAt: Date;
 
-  @ManyToOne(() => Category, {
+  @ManyToOne(() => Category, (category) => category.news, {
     nullable: true,
     onDelete: 'SET NULL',
   })
