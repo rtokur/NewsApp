@@ -1,12 +1,14 @@
 import Feather from "@expo/vector-icons/Feather";
 import { BlurView } from "expo-blur";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo } from "react";
-import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { newsList } from "../data/newsList";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCardScroll } from "../hooks/useCardScroll";
+import { fetchNewsDetail } from "../services/newsService";
+import { timeAgo } from "../utils/timeAgo";
+import { formatDate } from "../utils/formatDate";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_BASE_HEIGHT = 60;
@@ -15,14 +17,54 @@ const BACKGROUND_HEIGHT_RATIO = 0.7;
 const SNAP_OFFSET = 25;
 const SCROLL_AREA_OFFSET = 20;
 
+interface NewsDetail {
+  id: number;
+  title: string;
+  content: string;
+  imageUrl: string;
+  publishedAt: string;
+  source: string;
+  sourceLogoUrl: string;
+  category: {
+    id: number;
+    name: string;
+  };
+}
+
 export default function NewsDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
 
-  const news = useMemo(
-    () => newsList.find((item) => item.id === id),
-    [id]
-  );
+  const [news, setNews] = useState<NewsDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+  const loadDetail = async () => {
+    try {
+      const data = await fetchNewsDetail(Number(id));
+      if (isMounted) {
+        setNews(data);
+      }
+    } catch (e) {
+      if (isMounted) {
+        setError("Failed to load news detail");
+      }
+    } finally {
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+  };
+
+  loadDetail();
+
+  return () => {
+    isMounted = false;
+  };
+  }, [id]);
 
   const dimensions = useMemo(() => {
     const headerHeight = HEADER_BASE_HEIGHT + insets.top;
@@ -50,27 +92,39 @@ export default function NewsDetailScreen() {
     collapseCard,
   } = useCardScroll(dimensions.snapPoint);
 
-  if (!news) {
-    return null;
+  if (loading) {
+    return <ActivityIndicator style={{ flex: 1 }} />;
+  }
+  
+  if (error) {
+    return <Text>{error}</Text>;
   }
 
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={{ uri: news.image }}
+        source={{ uri: news?.imageUrl }}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        <View style={styles.overlay} />
+        <LinearGradient
+              colors={[
+                "rgba(0,0,0,0.55)",
+                "rgba(0,0,0,0.20)",
+                "rgba(0,0,0,0.75)",
+              ]}
+              locations={[0, 0.6, 1]}
+              style={StyleSheet.absoluteFill}
+            />
       </ImageBackground>
 
       <View style={[styles.imageContent, { bottom: dimensions.imageContentBottom }]}>
-        <Text style={styles.imageCategory}>{news.category}</Text>
-        <Text style={styles.imageTitle}>{news.title}</Text>
+        <Text style={styles.imageCategory}>{news?.category.name}</Text>
+        <Text style={styles.imageTitle}>{news?.title}</Text>
         <View style={styles.dateContainer}>
           <Text style={styles.dateText}>Trending</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.dateText}>{news.date}</Text>
+          <Text style={styles.dateText}>{news?.publishedAt ? timeAgo(news.publishedAt) : "Unknown time"}</Text>
         </View>
       </View>
 
@@ -105,16 +159,16 @@ export default function NewsDetailScreen() {
           >
             <View style={styles.sourceRow}>
               <Image
-                source={{ uri: news.sourceLogo }}
+                source={{ uri: news?.sourceLogoUrl }}
                 style={styles.sourceLogo}
               />
               <View>
-                <Text style={styles.sourceName}>{news.sourceName}</Text>
-                <Text style={styles.sourceDate}>{news.date}</Text>
+                <Text style={styles.sourceName}>{news?.source}</Text>
+                <Text style={styles.sourceDate}>{news?.publishedAt ? formatDate(news.publishedAt) : "Unknown time"}</Text>
               </View>
             </View>
 
-            <Text style={styles.description}>{news.description}</Text>
+            <Text style={styles.description}>{news?.content}</Text>
 
             <View style={{ height: insets.bottom + 20 }} />
           </ScrollView>
@@ -154,11 +208,8 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     position: "absolute",
+    width: "100%",
     height: SCREEN_HEIGHT * BACKGROUND_HEIGHT_RATIO,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
   },
   imageContent: {
     position: "absolute",

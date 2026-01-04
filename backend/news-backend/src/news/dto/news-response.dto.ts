@@ -15,6 +15,9 @@ export class NewsResponseDto {
 
     @ApiProperty()
     source: string;
+
+    @ApiProperty({ example: 'https://example.com/logo.png', description: 'The logo URL of the news source' })
+    sourceLogoUrl: string;
   
     @ApiProperty({ nullable: true })
     category: {

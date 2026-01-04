@@ -12,7 +12,7 @@ export class NewsController {
 
   @Get()
   @ApiResponse({type: NewsListResponseDto})
-  findAll(
+  async findAll(
     @Query() query: GetNewsDto,
   ) {
     return this.newsService.findAll(query);
@@ -22,7 +22,7 @@ export class NewsController {
   @ApiResponse({status: 200, description: 'The news item has been successfully retrieved.'})
   @ApiResponse({status: 404, description: 'News item not found.'})
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.newsService.findOne(id);
   }
 }

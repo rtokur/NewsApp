@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { News } from './entities/news.entity';
 import { GetNewsDto } from './dto/get-news.dto';
+import { NewsDetailResponseDto } from './dto/news-detail-response.dto';
 
 @Injectable()
 export class NewsService {
@@ -32,6 +33,7 @@ export class NewsService {
         imageUrl: item.imageUrl,
         publishedAt: item.publishedAt,
         source: item.source,
+        sourceLogoUrl: item.sourceLogoUrl,
         category: item.category
           ? { id: item.category.id, name: item.category.name }
           : null,
@@ -45,18 +47,25 @@ export class NewsService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<NewsDetailResponseDto> {
     const news = await this.newsRepository.findOne({
       where: { id },
-      relations: {
-        category: true,
-      },
+      relations: ['category'],
     });
 
     if (!news) {
       throw new NotFoundException('News not found');
     }
 
-    return news;
+    return {
+      id: news.id,
+      title: news.title,
+      content: news.content,
+      imageUrl: news.imageUrl,
+      publishedAt: news.publishedAt,
+      source: news.source,
+      sourceLogoUrl: news.sourceLogoUrl,
+      category: { id: news.category.id, name: news.category.name },
+    };
   }
 }

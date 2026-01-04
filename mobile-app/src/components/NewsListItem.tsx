@@ -1,13 +1,14 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { formatDate } from "../utils/formatDate";
 
 type Props = {
   item: {
-    image: string;
-    category: string;
+    imageUrl: string;
+    category: [any];
     title: string;
-    sourceLogo: string;
-    sourceName: string;
-    date: string;
+    sourceLogoUrl: string;
+    source: string;
+    publishedAt: string;
   };
   onPress: () => void;
 };
@@ -18,18 +19,18 @@ export default function NewsListItem({ item, onPress }: Props) {
     style={styles.container}
     onPress={onPress}
     >
-      <Image source={{ uri: item.image }} style={styles.thumbnail} />
+      <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />
 
       <View style={styles.content}>
-        <Text style={styles.category}>{item.category}</Text>
+        <Text style={styles.category}>{item.category[0]}</Text>
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
         </Text>
         <View style={styles.sourceRow}>
-          <Image source={{ uri: item.sourceLogo }} style={styles.sourceLogo} />
-          <Text style={styles.sourceName}>{item.sourceName}</Text>
+          <Image source={{ uri: item.sourceLogoUrl }} style={styles.sourceLogo} />
+          <Text style={styles.sourceName}>{item.source}</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.date}>{item.date}</Text>
+          <Text style={styles.date}>{formatDate(item.publishedAt)}</Text>
         </View>
       </View>
     </Pressable>

@@ -7,6 +7,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { timeAgo } from "../utils/timeAgo";
+
 
 interface Props {
   item: any;
@@ -38,7 +40,7 @@ export function BreakingNewsCard({ item, scale, width, onPress }: Props) {
             <View style={styles.cardSourceContainer}>
               <Text style={styles.cardSourceName}>{item.sourceName}</Text>
               <Text style={styles.dot}>•</Text>
-              <Text style={styles.date}>{item.date}</Text>
+              <Text style={styles.date}>{timeAgo(item.date)}</Text>
             </View>
 
             <Text style={styles.cardTitle} numberOfLines={2}>

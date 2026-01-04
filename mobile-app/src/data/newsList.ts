@@ -1,4 +1,4 @@
-export const newsList = [
+export const newsListd = [
     {
         id: "1",
         image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d",

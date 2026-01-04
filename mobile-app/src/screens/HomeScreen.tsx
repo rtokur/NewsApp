@@ -5,8 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BreakingNewsCarousel } from "../components/BreakingNewsCarousel";
 import NewsListItem from "../components/NewsListItem";
 import SectionHeader from "../components/SectionHeader";
-import { newsList } from "../data/newsList";
-import { getTopHeadlines } from "../services/gnews";
+import { fetchNews } from "../services/newsService";
 
 export default function HomeScreen() {
   const [data, setData] = useState<any[]>([]);
@@ -15,38 +14,38 @@ export default function HomeScreen() {
 
   const breakingNewsData = useMemo(() => {
     return data.map((item, index) => ({
-      id: item.url || index.toString(),
+      id: item.id.toString(),
       title: item.title,
-      image: item.image,
-      category: "Breaking",
-      sourceName: item.source?.name ?? "Unknown",
-      date: new Date(item.publishedAt).toLocaleDateString("en-US"),
+      image: item.imageUrl,
+      category: item.category?.name ?? "General",
+      sourceName: item.source?? "Unknown",
+      date: item.publishedAt,
     }));
   }, [data]);
 
   useEffect(() => {
     let isMounted = true;
-    getTopHeadlines({ topic: "technology", lang: "en", max: 10 })
-      .then((response) => {
+    const loadNews = async () => {
+      try {
+        const fetchedNews = await fetchNews(1, 10);
         if (isMounted) {
-          setData(response.articles);
-          setLoading(false);
+          setData(fetchedNews);
         }
-      })
-      .catch(() => {
+      } catch (error) {
         if (isMounted) {
-          setError("Failed to fetch top headlines");
-          setLoading(false);
+          setError("Failed to load news. Please try again.");
         }
-      })
-      .finally(() => {
+      } finally {
         if (isMounted) {
           setLoading(false);
         }
-      });
-    return () => {
-      isMounted = false;
-    };
+      }
+    }
+    loadNews();
+      return () => {
+        isMounted = false;
+      };
+    
   }, []);
 
   if (loading) {
@@ -60,17 +59,7 @@ export default function HomeScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text
-          style={{
-            color: "red",
-            fontSize: 18,
-            textAlign: "center",
-            justifyContent: "center",
-            marginTop: 20,
-          }}
-        >
-          {error}
-        </Text>
+        <Text style={styles.errorText}>{error}</Text>
       </SafeAreaView>
     );
   }
@@ -78,7 +67,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <FlatList
-        data={newsList}
+        data={data}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <NewsListItem
@@ -112,5 +101,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 18,
+    textAlign: "center",
+    justifyContent: "center",
+    marginTop: 20,
   },
 });

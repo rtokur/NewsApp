@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities';
+import { CategoryResponseDto } from './dto/category-response.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -10,7 +11,17 @@ export class CategoriesService {
         private readonly categoryRepository: Repository<Category>,
     ) {}
 
-    findAll() {
-        return this.categoryRepository.find();
+    async findAll(): Promise<CategoryResponseDto[]> {
+        const categories = await this.categoryRepository
+            .createQueryBuilder('category')
+            .leftJoinAndSelect('category.news', 'news')
+            .loadRelationCountAndMap('category.newsCount', 'category.news')
+            .getMany();
+        
+        return categories.map((category) => ({
+            id: category.id,
+            name: category.name,
+            newsCount: (category as any).newsCount,
+        }));
     }
 }
