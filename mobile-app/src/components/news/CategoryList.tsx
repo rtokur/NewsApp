@@ -1,25 +1,24 @@
 import { FlatList, Pressable, StyleSheet, Text } from "react-native";
-import { categories } from "../data/categories";
-import { CategoryName } from "../hooks/useFilteredNews";
-
+import { Category } from "@/src/types/category";
 interface Props {
-  selectedCategory: CategoryName;
-  onSelect: (category: CategoryName) => void;
+  categories: Category[];
+  selectedCategory: Category;
+  onSelect: (category: Category) => void;
 }
 
-export default function CategoryList({ selectedCategory, onSelect }: Props) {
+export default function CategoryList({ categories ,selectedCategory, onSelect }: Props) {
   return (
     <FlatList
       data={categories}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id.toString()}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
       renderItem={({ item }) => {
-        const isActive = selectedCategory === item.name;
+        const isActive = selectedCategory.id === item.id;
         return (
           <Pressable
-            onPress={() => onSelect(item.name as CategoryName)}
+            onPress={() => onSelect(item)}
             style={[styles.item, isActive && styles.itemActive]}
           >
             <Text style={[styles.text, isActive && styles.textActive]}>

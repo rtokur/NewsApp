@@ -1,26 +1,22 @@
 import { useMemo } from "react";
-import { newsList } from "../data/newsList";
-export type CategoryName = "All" | "Politics" | "Sports" | "Technology" | "Economy" | "Health" | "Culture" | "Science";
+import { News } from "../types/news";
+import { Category } from "../types/category";
 
 export function useFilteredNews(
-    selectedCategory: CategoryName,
-    searchText: string,
-
+  news: News[],
+  selectedCategory: Category,
+  searchText: string
 ) {
-    return useMemo(() => {
-        let result = newsList;
-        if (selectedCategory !== "All") {
-            result = result.filter((news) => news.category === selectedCategory);
-        }
+  return useMemo(() => {
+    return news.filter((item) => {
+      const matchCategory =
+        selectedCategory.name === "All" ||
+        item.category?.id === selectedCategory.id;
 
-        if (searchText.trim()) {
-            const search = searchText.toLowerCase();
-            result = result.filter(
-                (news) =>
-                    news.title.toLowerCase().includes(search) ||
-                    news.sourceName.toLowerCase().includes(search)
-            );
-        }
-        return result;
-    }, [selectedCategory, searchText]);
+      const matchSearch =
+        item.title.toLowerCase().includes(searchText.toLowerCase());
+
+      return matchCategory && matchSearch;
+    });
+  }, [news, selectedCategory, searchText]);
 }

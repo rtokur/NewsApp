@@ -1,36 +1,41 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { formatDate } from "../utils/formatDate";
+import { formatDate } from "../../utils/formatDate";
+import { News } from "../../types/news";
 
 type Props = {
-  item: {
-    imageUrl: string;
-    category: [any];
-    title: string;
-    sourceLogoUrl: string;
-    source: string;
-    publishedAt: string;
-  };
+  item: News;
   onPress: () => void;
 };
 
 export default function NewsListItem({ item, onPress }: Props) {
   return (
-    <Pressable 
-    style={styles.container}
-    onPress={onPress}
-    >
-      <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />
+    <Pressable style={styles.container} onPress={onPress}>
+      <Image
+        source={{
+          uri:
+            item.imageUrl ??
+            "https://via.placeholder.com/100x100.png?text=No+Image",
+        }}
+        style={styles.thumbnail}
+      />
 
       <View style={styles.content}>
-        <Text style={styles.category}>{item.category[0]}</Text>
+        <Text style={styles.category}>{item.category?.name ?? "General"}</Text>
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
         </Text>
         <View style={styles.sourceRow}>
-          <Image source={{ uri: item.sourceLogoUrl }} style={styles.sourceLogo} />
-          <Text style={styles.sourceName}>{item.source}</Text>
+          {item.sourceLogoUrl && (
+            <Image
+              source={{ uri: item.sourceLogoUrl }}
+              style={styles.sourceLogo}
+            />
+          )}
+          <Text style={styles.sourceName}>{item.source ?? "Unknown"}</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.date}>{formatDate(item.publishedAt)}</Text>
+          <Text style={styles.date}>
+            {item.publishedAt ? formatDate(item.publishedAt) : "Just now"}
+          </Text>
         </View>
       </View>
     </Pressable>

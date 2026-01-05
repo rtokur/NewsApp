@@ -7,11 +7,11 @@ import {
   Text,
   View,
 } from "react-native";
-import { timeAgo } from "../utils/timeAgo";
-
+import { timeAgo } from "../../utils/timeAgo";
+import { News } from "../../types/news";
 
 interface Props {
-  item: any;
+  item: News;
   scale: Animated.AnimatedInterpolation<number>;
   width: number;
   onPress?: () => void;
@@ -23,7 +23,11 @@ export function BreakingNewsCard({ item, scale, width, onPress }: Props) {
       <Pressable style={styles.card} onPress={onPress}>
         <View style={styles.cardInner}>
           <ImageBackground
-            source={{ uri: item.image }}
+            source={{
+              uri:
+                item.imageUrl ??
+                "https://via.placeholder.com/400x200.png?text=No+Image",
+            }}
             style={styles.image}
             imageStyle={styles.imageRadius}
           >
@@ -36,11 +40,17 @@ export function BreakingNewsCard({ item, scale, width, onPress }: Props) {
               locations={[0, 0.6, 1]}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.category}>{item.category}</Text>
+            {item.category && (
+              <Text style={styles.category}>{item.category.name}</Text>
+            )}
             <View style={styles.cardSourceContainer}>
-              <Text style={styles.cardSourceName}>{item.sourceName}</Text>
+              <Text style={styles.cardSourceName}>
+                {item.source ?? "Unknown"}
+              </Text>
               <Text style={styles.dot}>•</Text>
-              <Text style={styles.date}>{timeAgo(item.date)}</Text>
+              <Text style={styles.date}>
+                {item.publishedAt ? timeAgo(item.publishedAt) : "Just now"}
+              </Text>
             </View>
 
             <Text style={styles.cardTitle} numberOfLines={2}>

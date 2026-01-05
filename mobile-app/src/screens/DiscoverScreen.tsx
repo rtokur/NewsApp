@@ -1,32 +1,39 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useCallback, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState, useMemo } from "react";
+import { FlatList, StyleSheet, Text, View, ActivityIndicator, Keyboard, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import CategoryList from "../components/CategoryList";
-import NewsListItem from "../components/NewsListItem";
-import SearchBar from "../components/SearchBar";
-import { CategoryName, useFilteredNews } from "../hooks/useFilteredNews";
-
 import { router } from "expo-router";
 
-type NewsItem = {
-  id: string;
-  image: string;
-  category: string;
-  title: string;
-  sourceLogo: string;
-  sourceName: string;
-  date: string;
-};
+import CategoryList from "../components/news/CategoryList";
+import NewsListItem from "../components/news/NewsListItem";
+import SearchBar from "../components/ui/SearchBar";
+
+import { useAllNews } from "../hooks/useAllNews";
+import { useCategories } from "../hooks/useCategories";
+import { useFilteredNews } from "../hooks/useFilteredNews";
+import { Category } from "../types/category";
 
 export default function DiscoverScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryName>("All");
+  const { data, loading, error } = useAllNews();
+  const { categories, loadingCategories, errorCategories } = useCategories();
+  const allCategory: Category = {
+    id: 0,
+    name: "All",
+    newsCount: categories.length,
+  };
+  const categoryList = useMemo(
+    () => [allCategory, ...categories],
+    [categories]
+  );
+
+  const [selectedCategory, setSelectedCategory] =
+    useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
 
-  const filteredNews = useFilteredNews(selectedCategory, searchText);
+  const filteredNews = useFilteredNews(data, selectedCategory, searchText);
+
   const renderNewsItem = useCallback(
-    ({ item }: { item: NewsItem }) => (
+    ({ item }: any) => (
       <NewsListItem
         item={item}
         onPress={() =>
@@ -34,8 +41,24 @@ export default function DiscoverScreen() {
         }
       />
     ),
-    [router]
+    []
   );
+
+  if (loading || loadingCategories) {
+    return (
+      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || errorCategories) {
+    return (
+      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
+        <Text>{error || errorCategories}</Text>
+      </SafeAreaView>
+    );
+  }
 
   const ListEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -45,32 +68,39 @@ export default function DiscoverScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <View>
-        <Text style={styles.title}>Discover</Text>
-        <Text style={styles.subtitle}>News from all around the world</Text>
+    <Pressable
+      style={{ flex: 1 }}
+      onPress={Keyboard.dismiss}
+      accessible={false}
+    >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View>
+          <Text style={styles.title}>Discover</Text>
+          <Text style={styles.subtitle}>News from all around the world</Text>
 
-        <SearchBar
-          value={searchText}
-          onChangeText={setSearchText}
-          onClear={() => setSearchText("")}
-          placeholder="Search"
+          <SearchBar
+            value={searchText}
+            onChangeText={setSearchText}
+            onClear={() => setSearchText("")}
+            placeholder="Search"
+          />
+
+          <CategoryList
+            categories={categoryList}
+            selectedCategory={selectedCategory}
+            onSelect={setSelectedCategory}
+          />
+        </View>
+
+        <FlatList
+          data={filteredNews}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderNewsItem}
+          ListEmptyComponent={ListEmpty}
+          showsVerticalScrollIndicator={false}
         />
-
-        <CategoryList
-          selectedCategory={selectedCategory}
-          onSelect={setSelectedCategory}
-        />
-      </View>
-
-      <FlatList
-        data={filteredNews}
-        keyExtractor={(item) => item.id}
-        renderItem={renderNewsItem}
-        ListEmptyComponent={ListEmpty}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+      </SafeAreaView>
+    </Pressable>
   );
 }
 

@@ -1,8 +1,9 @@
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Animated, Dimensions, FlatList, View } from "react-native";
 import { BreakingNewsCard } from "./BreakingNewsCard";
-import { PaginationDots } from "./PaginationDots";
+import { PaginationDots } from "../ui/PaginationDots";
+import { News } from "../../types/news";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
@@ -11,14 +12,23 @@ const SIDE_PADDING = (SCREEN_WIDTH - CARD_WIDTH) / 2;
 const ITEM_SIZE = CARD_WIDTH + CARD_SPACING;
 
 interface Props {
-  data: any[];
+  data: News[];
 }
 
 export function BreakingNewsCarousel({ data }: Props) {
   const listRef = useRef<FlatList>(null);
-  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const scrollX = useRef(new Animated.Value(ITEM_SIZE)).current;
+
   const [activeIndex, setActiveIndex] = useState(0);
+
   const loopedData = [data[data.length - 1], ...data, data[0]];
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToOffset({ offset: ITEM_SIZE, animated: false });
+    });
+  }, []);
 
   const handleLoop = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -69,7 +79,6 @@ export function BreakingNewsCarousel({ data }: Props) {
         scrollEventThrottle={16}
         onMomentumScrollEnd={handleLoop}
         ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
-        initialScrollIndex={1}
         renderItem={({ item, index }) => {
           const inputRange = [
             (index - 1) * ITEM_SIZE,
@@ -84,9 +93,17 @@ export function BreakingNewsCarousel({ data }: Props) {
           });
 
           return (
-            <BreakingNewsCard item={item} scale={scale} width={CARD_WIDTH} onPress={() =>
-              router.push({ pathname: "/news/[id]", params: { id: item.id } })
-            } />
+            <BreakingNewsCard
+              item={item}
+              scale={scale}
+              width={CARD_WIDTH}
+              onPress={() =>
+                router.push({
+                  pathname: "/news/[id]",
+                  params: { id: item.id },
+                })
+              }
+            />
           );
         }}
       />

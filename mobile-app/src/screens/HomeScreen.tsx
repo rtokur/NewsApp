@@ -1,54 +1,17 @@
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BreakingNewsCarousel } from "../components/BreakingNewsCarousel";
-import NewsListItem from "../components/NewsListItem";
-import SectionHeader from "../components/SectionHeader";
-import { fetchNews } from "../services/newsService";
+import { BreakingNewsCarousel } from "../components/news/BreakingNewsCarousel";
+import NewsListItem from "../components/news/NewsListItem";
+import SectionHeader from "../components/ui/SectionHeader";
+import { useRecommendedNews } from "../hooks/useRecommendedNews";
+import { useBreakingHighlight } from "../hooks/useBreakingHighlight";
 
 export default function HomeScreen() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: breakingNewsHighlight, loading: breakingLoading, error: breakingError } = useBreakingHighlight();
+  const { data: recommendedNews, loading: recommendedLoading, error: recommendedError } = useRecommendedNews();
 
-  const breakingNewsData = useMemo(() => {
-    return data.map((item, index) => ({
-      id: item.id.toString(),
-      title: item.title,
-      image: item.imageUrl,
-      category: item.category?.name ?? "General",
-      sourceName: item.source?? "Unknown",
-      date: item.publishedAt,
-    }));
-  }, [data]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadNews = async () => {
-      try {
-        const fetchedNews = await fetchNews(1, 10);
-        if (isMounted) {
-          setData(fetchedNews);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setError("Failed to load news. Please try again.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-    loadNews();
-      return () => {
-        isMounted = false;
-      };
-    
-  }, []);
-
-  if (loading) {
+  if (recommendedLoading || breakingLoading) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -56,10 +19,10 @@ export default function HomeScreen() {
     );
   }
 
-  if (error) {
+  if (recommendedError || breakingError) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{recommendedError || breakingError}</Text>
       </SafeAreaView>
     );
   }
@@ -67,8 +30,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
+        data={recommendedNews ?? []}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <NewsListItem
             item={item}
@@ -83,12 +46,15 @@ export default function HomeScreen() {
               title="Breaking News"
               onPress={() => console.log("Viewall")}
             />
-            <BreakingNewsCarousel data={breakingNewsData} />
+            <BreakingNewsCarousel data={breakingNewsHighlight} />
             <SectionHeader
               title="Recommendation"
               onPress={() => console.log("Viewall")}
             />
           </>
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No news available.</Text>
         }
         showsVerticalScrollIndicator={false}
       />
@@ -108,5 +74,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     justifyContent: "center",
     marginTop: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "#555555",
   },
 });

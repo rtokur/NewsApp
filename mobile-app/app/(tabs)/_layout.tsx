@@ -1,4 +1,4 @@
-import { CircleButton } from "@/src/components/CircleButton";
+import { CircleButton } from "@/src/components/ui/CircleButton";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Fontisto from "@expo/vector-icons/Fontisto";

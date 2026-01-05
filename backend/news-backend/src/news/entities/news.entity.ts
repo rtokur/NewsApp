@@ -29,4 +29,7 @@ export class News {
     onDelete: 'SET NULL',
   })
   category: Category;
+
+  @Column()
+  isBreaking: boolean;
 }
