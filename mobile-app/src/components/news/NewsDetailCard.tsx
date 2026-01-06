@@ -9,7 +9,9 @@ interface Props {
 export function NewsDetailCard({ news }: Props) {
   return (
     <View style={styles.card}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}>
         <View style={styles.sourceRow}>
           <Image source={{ uri: news.sourceLogoUrl }} style={styles.logo} />
           <View>
@@ -32,6 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    marginTop: -30,
   },
   content: {
     padding: 20,
@@ -61,7 +64,8 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
-    lineHeight: 26,
+    lineHeight: 28,
     color: "#333",
+    paddingBottom: 15,
   },
 });

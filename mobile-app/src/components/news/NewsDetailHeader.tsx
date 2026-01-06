@@ -28,18 +28,17 @@ export function NewsDetailHeader({ news }: Props) {
           colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
           style={StyleSheet.absoluteFill}
         />
-      </ImageBackground>
+        <View style={styles.content}>
+          <Text style={styles.category}>{news.category.name}</Text>
+          <Text style={styles.title}>{news.title}</Text>
 
-      <View style={styles.content}>
-        <Text style={styles.category}>{news.category.name}</Text>
-        <Text style={styles.title}>{news.title}</Text>
-
-        <View style={styles.row}>
-          <Text style={styles.meta}>Trending</Text>
-          <Text style={styles.dot}>•</Text>
-          <Text style={styles.meta}>{timeAgo(news.publishedAt)}</Text>
+          <View style={styles.row}>
+            <Text style={styles.meta}>Trending</Text>
+            <Text style={styles.dot}>•</Text>
+            <Text style={styles.meta}>{timeAgo(news.publishedAt)}</Text>
+          </View>
         </View>
-      </View>
+      </ImageBackground>
 
       <SafeAreaView edges={["top"]} style={styles.header}>
         <Pressable onPress={router.back}>
@@ -63,14 +62,13 @@ export function NewsDetailHeader({ news }: Props) {
 
 const styles = StyleSheet.create({
   bg: {
-    position: "absolute",
+    justifyContent: "flex-end",
     width: "100%",
     height: SCREEN_HEIGHT * 0.4,
   },
   content: {
-    marginTop: 140,
-    marginHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 50,
   },
   category: {
     backgroundColor: "#007AFF",
@@ -87,10 +85,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "700",
     color: "#fff",
-    lineHeight: 32,
-    marginBottom: 10,
+    lineHeight: 30,
+    includeFontPadding: false,
   },
-  row: { flexDirection: "row", alignItems: "center" },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
   meta: { color: "rgba(255,255,255,0.8)", fontSize: 13 },
   dot: { marginHorizontal: 8, color: "rgba(255,255,255,0.8)" },
   header: {

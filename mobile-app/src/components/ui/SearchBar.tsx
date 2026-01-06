@@ -1,5 +1,6 @@
 import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   onChangeText: (text: string) => void;
   onClear: () => void;
   placeholder: string;
+  sortOrder: "ASC" | "DESC";
+  onToggleSort: () => void;
 }
 
 export default function SearchBar({
@@ -14,6 +17,8 @@ export default function SearchBar({
   onChangeText,
   onClear,
   placeholder,
+  sortOrder,
+  onToggleSort,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -30,7 +35,17 @@ export default function SearchBar({
           <Ionicons name="close-circle" size={20} color="#8E8E93" />
         </Pressable>
       ) : (
-        <Ionicons name="filter" size={22} color="#8E8E93" />
+        <Pressable onPress={onToggleSort}>
+          <FontAwesome
+            name={
+              sortOrder === "DESC"
+                ? "sort-amount-desc"
+                : "sort-amount-asc"
+            }
+            size={20}
+            color="#8E8E93"
+          />
+        </Pressable>
       )}
     </View>
   );

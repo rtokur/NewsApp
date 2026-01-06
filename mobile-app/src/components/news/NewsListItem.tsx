@@ -1,9 +1,9 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatDate } from "../../utils/formatDate";
-import { News } from "../../types/news";
+import { News, NewsData } from "../../types/news";
 
 type Props = {
-  item: News;
+  item: NewsData;
   onPress: () => void;
 };
 

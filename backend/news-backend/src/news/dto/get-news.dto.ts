@@ -1,6 +1,11 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsInt, IsOptional, Min } from "class-validator";
+import { IsInt, IsOptional, IsString, Min } from "class-validator";
 import { Type } from "class-transformer";
+
+export enum SortOrder {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
 
 export class GetNewsDto{
     @ApiPropertyOptional({ description: 'Page number for pagination', example: 1 })
@@ -22,4 +27,14 @@ export class GetNewsDto{
     @Type(() => Number)
     @IsInt({ message: 'Category ID must be an integer' })
     categoryId?: number;
+
+    @ApiPropertyOptional({ example: 'Nvidia' })
+    @IsOptional()
+    @IsString()
+    search?: string;
+
+    @ApiPropertyOptional()
+    @IsString()
+    @IsOptional()
+    sortOrder?: SortOrder = SortOrder.DESC;
 }

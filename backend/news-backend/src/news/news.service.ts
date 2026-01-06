@@ -13,16 +13,25 @@ export class NewsService {
     private readonly newsRepository: Repository<News>,
   ) {}
 
-  async findAll({ page = 1, limit = 10, categoryId }: GetNewsDto) {
+  async findAll({ page = 1, limit = 10, categoryId, search, sortOrder }: GetNewsDto) {
     const query = this.newsRepository
       .createQueryBuilder('news')
       .leftJoinAndSelect('news.category', 'category')
-      .orderBy('news.publishedAt', 'DESC')
+      .orderBy('news.publishedAt', sortOrder ?? 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    if(search) {
+      query.andWhere(
+        `(news.title ILIKE :search 
+        OR news.content ILIKE :search 
+        OR news.source ILIKE :search)`,
+      { search: `%${search}%` },
+      )
     }
 
     const [news, total] = await query.getManyAndCount();
@@ -52,17 +61,26 @@ export class NewsService {
   }
   
 
-  async findBreakingNews({ page = 1,limit = 10, categoryId }: GetNewsDto) {
+  async findBreakingNews({ page = 1,limit = 10, categoryId, search, sortOrder }: GetNewsDto) {
     const query = this.newsRepository
       .createQueryBuilder('news')
       .andWhere('news.isBreaking = true')
       .leftJoinAndSelect('news.category', 'category')
-      .orderBy('news.publishedAt', 'DESC')
+      .orderBy('news.publishedAt', sortOrder ?? 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    if(search) {
+      query.andWhere(
+        `(news.title ILIKE :search 
+        OR news.content ILIKE :search 
+        OR news.source ILIKE :search)`,
+      { search: `%${search}%` },
+      )
     }
 
     const [news, total] = await query.getManyAndCount();
@@ -78,17 +96,26 @@ export class NewsService {
     };
   }
 
-  async findRecommendations({ page = 1, limit = 10, categoryId }: GetNewsDto) {
+  async findRecommendations({ page = 1, limit = 10, categoryId, search, sortOrder }: GetNewsDto) {
     const query = this.newsRepository
       .createQueryBuilder('news')
       .andWhere('news.isBreaking = false')
       .leftJoinAndSelect('news.category', 'category')
-      .orderBy('news.publishedAt', 'DESC')
+      .orderBy('news.publishedAt', sortOrder ?? 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    if(search) {
+      query.andWhere(
+        `(news.title ILIKE :search 
+        OR news.content ILIKE :search 
+        OR news.source ILIKE :search)`,
+      { search: `%${search}%` },
+      )
     }
 
     const [news, total] = await query.getManyAndCount();
