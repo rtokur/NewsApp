@@ -6,22 +6,22 @@ import { CategoryResponseDto } from './dto/category-response.dto';
 
 @Injectable()
 export class CategoriesService {
-    constructor(
-        @InjectRepository(Category)
-        private readonly categoryRepository: Repository<Category>,
-    ) {}
+  constructor(
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+  ) {}
 
-    async findAll(): Promise<CategoryResponseDto[]> {
-        const categories = await this.categoryRepository
-            .createQueryBuilder('category')
-            .leftJoinAndSelect('category.news', 'news')
-            .loadRelationCountAndMap('category.newsCount', 'category.news')
-            .getMany();
-        
-        return categories.map((category) => ({
-            id: category.id,
-            name: category.name,
-            newsCount: (category as any).newsCount,
-        }));
-    }
+  async findAll(): Promise<CategoryResponseDto[]> {
+    const categories = await this.categoryRepository
+      .createQueryBuilder('category')
+      .loadRelationCountAndMap('category.newsCount', 'category.news')
+      .orderBy('category.name', 'ASC')
+      .getMany();
+
+    return categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      newsCount: (category as Category & { newsCount: number }).newsCount,
+    }));
+  }
 }

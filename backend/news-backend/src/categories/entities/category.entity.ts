@@ -11,4 +11,6 @@ export class Category {
 
   @OneToMany(() => News, (news) => news.category)
   news: News[];
+
+  newsCount?: number;
 }
