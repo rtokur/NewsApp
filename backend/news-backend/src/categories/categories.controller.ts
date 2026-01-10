@@ -4,7 +4,7 @@ import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { CategoryResponseDto } from './dto/category-response.dto';
 
 @ApiTags('Categories')
-@Controller('categories')
+@Controller('v1/categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 

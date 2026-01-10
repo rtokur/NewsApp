@@ -1,9 +1,9 @@
 import { router } from "expo-router";
 import { useRef, useState, useEffect } from "react";
-import { Animated, Dimensions, FlatList, View } from "react-native";
+import { Animated, Dimensions, FlatList, View, StyleSheet, Text } from "react-native";
 import { BreakingNewsCard } from "./BreakingNewsCard";
 import { PaginationDots } from "../ui/PaginationDots";
-import { News } from "../../types/news";
+import { NewsData } from "@/src/types/news";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
@@ -12,15 +12,24 @@ const SIDE_PADDING = (SCREEN_WIDTH - CARD_WIDTH) / 2;
 const ITEM_SIZE = CARD_WIDTH + CARD_SPACING;
 
 interface Props {
-  data: News[];
+  data: NewsData[];
 }
 
 export function BreakingNewsCarousel({ data }: Props) {
+
   const listRef = useRef<FlatList>(null);
 
   const scrollX = useRef(new Animated.Value(ITEM_SIZE)).current;
 
   const [activeIndex, setActiveIndex] = useState(0);
+  
+  if (!data || data.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>No news available.</Text>
+      </View>
+    );
+  }
 
   const loopedData = [data[data.length - 1], ...data, data[0]];
 
@@ -112,3 +121,15 @@ export function BreakingNewsCarousel({ data }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  emptyContainer: {
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#666",
+  },
+});

@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatDate } from "../../utils/formatDate";
-import { News, NewsData } from "../../types/news";
+import { NewsData } from "../../types/news";
 
 type Props = {
   item: NewsData;
@@ -25,13 +25,13 @@ export default function NewsListItem({ item, onPress }: Props) {
           {item.title}
         </Text>
         <View style={styles.sourceRow}>
-          {item.sourceLogoUrl && (
+          {item.source?.logoUrl && (
             <Image
-              source={{ uri: item.sourceLogoUrl }}
+              source={{ uri: item.source.logoUrl }}
               style={styles.sourceLogo}
             />
           )}
-          <Text style={styles.sourceName}>{item.source ?? "Unknown"}</Text>
+          <Text style={styles.sourceName}>{item.source?.name ?? "Unknown"}</Text>
           <Text style={styles.dot}>•</Text>
           <Text style={styles.date}>
             {item.publishedAt ? formatDate(item.publishedAt) : "Just now"}

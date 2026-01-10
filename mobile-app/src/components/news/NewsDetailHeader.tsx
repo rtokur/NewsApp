@@ -30,7 +30,7 @@ export function NewsDetailHeader({ news }: Props) {
         />
         <View style={styles.content}>
           <Text style={styles.category}>{news.category.name}</Text>
-          <Text style={styles.title}>{news.title}</Text>
+          <Text style={styles.title} numberOfLines={4}>{news.title}</Text>
 
           <View style={styles.row}>
             <Text style={styles.meta}>Trending</Text>

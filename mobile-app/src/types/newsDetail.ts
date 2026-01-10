@@ -4,8 +4,11 @@ export interface NewsDetail {
   content: string;
   imageUrl: string;
   publishedAt: string;
-  source: string;
-  sourceLogoUrl: string;
+  source: {
+    id: number;
+    name: string;
+    logoUrl: string;
+  };
   category: {
     id: number;
     name: string;

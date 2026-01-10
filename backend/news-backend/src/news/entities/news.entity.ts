@@ -1,5 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Category } from '../../categories/entities';
+import { Source } from 'src/sources/entities/source.entity';
 
 @Entity('news')
 export class News {
@@ -15,12 +16,6 @@ export class News {
   @Column()
   imageUrl: string;
 
-  @Column()
-  source: string;
-
-  @Column()
-  sourceLogoUrl: string;
-
   @Column({ type: 'timestamptz'})
   publishedAt: Date;
 
@@ -32,4 +27,10 @@ export class News {
 
   @Column()
   isBreaking: boolean;
+
+  @ManyToOne(() => Source, (source) => source.news, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  source: Source;
 }

@@ -4,60 +4,123 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BreakingNewsCarousel } from "@/src/components/news/BreakingNewsCarousel";
 import NewsListItem from "@/src/components/news/NewsListItem";
 import SectionHeader from "@/src/components/ui/SectionHeader";
-import { useRecommendedNews } from "@/src/hooks/useRecommendedNews";
-import { useBreakingHighlight } from "@/src/hooks/useBreakingHighlight";
+import { useHighlightNews } from "@/src/hooks/useHighlightNews";
+import BreakingNewsSkeleton from "@/src/components/news/BreakingNewsSkeleton";
+import NewsCarouselCardSkeletonItem from "@/src/components/news/NewsSkeletonItem";
+import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 
 export default function HomeScreen() {
-  const { data: breakingNewsHighlight, loading: breakingLoading, error: breakingError } = useBreakingHighlight();
-  const { data: recommendedNews, loading: recommendedLoading, error: recommendedError } = useRecommendedNews();
+  const {
+    data: breakingNewsHighlight,
+    loading: breakingLoading,
+    error: breakingError,
+  } = useHighlightNews("breaking-highlight");
+  const {
+    data: recommendedNewsHighlight,
+    loading: recommendedLoading,
+    error: recommendedError,
+  } = useHighlightNews("recommendations-highlight");
 
-  if (recommendedLoading || breakingLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </SafeAreaView>
-    );
-  }
+  const isLoading = recommendedLoading || breakingLoading;
 
   if (recommendedError || breakingError) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text style={styles.errorText}>{recommendedError || breakingError}</Text>
+        <Text style={styles.errorText}>
+          {recommendedError || breakingError}
+        </Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
-      <FlatList
-        data={recommendedNews ?? []}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <NewsListItem
-            item={item}
+      {isLoading ? (
+        <>
+          <SectionHeader
+            title="Breaking News"
             onPress={() =>
-              router.push({ pathname: "/news/[id]", params: { id: item.id } })
+              router.push({
+                pathname: "/news/list",
+                params: {
+                  type: "breaking",
+                  title: "Breaking News",
+                },
+              })
             }
           />
-        )}
-        ListHeaderComponent={
-          <>
-            <SectionHeader
-              title="Breaking News"
-              onPress={() => console.log("Viewall")}
+          <BreakingNewsSkeleton />
+          {Array.from({ length: 1 }).map((_, i) => (
+            <NewsCarouselCardSkeletonItem key={i} />
+          ))}
+          <SectionHeader
+            title="Recommendation"
+            onPress={() =>
+              router.push({
+                pathname: "/news/list",
+                params: {
+                  type: "recommendations",
+                  title: "Recommendation News",
+                },
+              })
+            }
+          />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <NewsListItemSkeleton key={i} />
+          ))}
+        </>
+      ) : (
+        <FlatList
+          data={recommendedNewsHighlight}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <NewsListItem
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/news/[id]",
+                  params: { id: item.id },
+                })
+              }
             />
-            <BreakingNewsCarousel data={breakingNewsHighlight} />
-            <SectionHeader
-              title="Recommendation"
-              onPress={() => console.log("Viewall")}
-            />
-          </>
-        }
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No news available.</Text>
-        }
-        showsVerticalScrollIndicator={false}
-      />
+          )}
+          ListHeaderComponent={
+            <>
+              <SectionHeader
+                title="Breaking News"
+                onPress={() =>
+                  router.push({
+                    pathname: "/news/list",
+                    params: {
+                      type: "breaking",
+                      title: "Breaking News",
+                    },
+                  })
+                }
+              />
+              <BreakingNewsCarousel
+                data={breakingNewsHighlight ? breakingNewsHighlight : []}
+              />
+              <SectionHeader
+                title="Recommendation"
+                onPress={() =>
+                  router.push({
+                    pathname: "/news/list",
+                    params: {
+                      type: "recommendations",
+                      title: "Recommendation News",
+                    },
+                  })
+                }
+              />
+            </>
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No news available.</Text>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

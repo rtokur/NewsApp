@@ -27,13 +27,11 @@ export class NewsDetailResponseDto {
   })
   publishedAt: Date;
   @ApiProperty()
-  source: string;
-
-  @ApiProperty({
-    example: 'https://example.com/logo.png',
-    description: 'The logo URL of the news source',
-  })
-  sourceLogoUrl: string;
+  source: {
+    id: number;
+    name: string;
+    logoUrl: string;
+  };
 
   @ApiProperty()
   category: {

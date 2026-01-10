@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
-import { fetchNews } from "../services/newsService";
-import { News, NewsData } from "../types/news";
-
-interface UseNewsParams {
-  page: number;
-  categoryId?: number;
-  search?: string;
-  sortOrder?: "ASC" | "DESC";
-}
+import { fetchNewsByType, FetchNewsParams } from "../services/newsService";
+import { NewsData, PaginatedResponse } from "../types/news";
 
 export function useNews({
-  page,
+  type = "all",
+  page = 1,
+  limit,
   categoryId,
   search,
-  sortOrder,
-}: UseNewsParams) {
+  sortOrder = "DESC",
+}: FetchNewsParams) {
   const [data, setData] = useState<NewsData[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    setData([]);
+    setHasMore(true);
+  }, [type, categoryId, search, sortOrder]);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,11 +31,13 @@ export function useNews({
         } else {
           setLoading(true);
         }
-        const result = await fetchNews({
+    
+        const result = await fetchNewsByType<PaginatedResponse<NewsData>>({
           page,
-          limit: 10,
-          categoryId: categoryId && categoryId !== 0 ? categoryId : undefined,
-          search: search?.trim() || undefined,
+          limit,
+          type,
+          categoryId: categoryId || undefined,
+          search: search?.trim() || undefined, 
           sortOrder,
         });
 
@@ -52,7 +54,7 @@ export function useNews({
           return [...prev, ...newItems];
         });
 
-        setHasMore(page < (result.meta?.totalPages ?? 1));
+        setHasMore(page < (result.meta.totalPages ?? 1));
       } catch {
         if (isMounted) setError("Failed to load news");
       } finally {
@@ -67,7 +69,7 @@ export function useNews({
     return () => {
       isMounted = false;
     };
-  }, [page, categoryId, search, sortOrder]);
+  }, [page, type, categoryId, search, sortOrder]);
 
   return { data, loading, initialLoading, error, hasMore };
 }

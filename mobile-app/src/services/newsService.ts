@@ -1,8 +1,9 @@
-import { NewsDetail } from "../types/newsDetail";
 import api from "./api";
-import { News } from "../types/news";
+import { NewsData, NewsType, PaginatedResponse } from "../types/news";
+import { NewsDetail } from "../types/newsDetail";
 
-interface FetchNewsParams {
+export interface FetchNewsParams {
+  type?: NewsType;
   page?: number;
   limit?: number;
   categoryId?: number;
@@ -10,26 +11,38 @@ interface FetchNewsParams {
   sortOrder?: "ASC" | "DESC";
 }
 
-export const fetchNews = async ({page = 1, limit = 10, categoryId, search, sortOrder = 'DESC'} : FetchNewsParams): Promise<News> => {
-  try {
-    const response = await api.get("/news", { params: { 
-      page, 
-      limit, 
-      categoryId, 
+export async function fetchNewsByType<T>({
+  type = "all",
+  page = 1,
+  limit,
+  categoryId,
+  search,
+  sortOrder = "DESC",
+}: FetchNewsParams): Promise<T> {
+  const endpointMap: Record<NewsType, string> = {
+    all: "v1/news",
+    breaking: "v1/news/breaking",
+    recommendations: "v1/news/recommendations",
+    "breaking-highlight": "v1/news/breaking/highlight",
+    "recommendations-highlight": "v1/news/recommendations/highlight",
+  };
+
+  const response = await api.get(endpointMap[type], {
+    params: {
+      page,
+      limit,
+      categoryId,
       search,
       sortOrder,
-    } });
-    console.log("FetchNews response data:", response.data);
-    return response.data;
-  } catch (err: any) {
-    console.error("FetchNews error details:", err.response || err.message);
-    throw err;
-  }
-};
+    },
+  });
+
+  return response.data;
+}
 
 export async function fetchNewsDetail(id: number): Promise<NewsDetail> {
   try {
-    const response = await api.get(`/news/${id}`);
+    const response = await api.get(`v1/news/${id}`);
     console.log("FetchNewsDetail response data:", response.data);
     return response.data;
   } catch (err: any) {
@@ -40,45 +53,3 @@ export async function fetchNewsDetail(id: number): Promise<NewsDetail> {
     throw err;
   }
 }
-
-export const fetchBreakingNewsHighlight = async (): Promise<News> => {
-  try {
-    const response = await api.get("/news/breaking/highlight");
-    console.log("FetchBreakingNewsHighlight response data:", response.data);
-    return response.data.data;
-  } catch (err: any) {
-    console.error(
-      "FetchBreakingNewsHighlight error details:",
-      err.response || err.message
-    );
-    throw err;
-  }
-}
-
-export const fetchBreakingNews = async (): Promise<News> => {
-  try {
-    const response = await api.get("/news/breaking");
-    console.log("FetchBreakingNews response data:", response.data);
-    return response.data.data;
-  } catch (err: any) {
-    console.error(
-      "FetchBreakingNews error details:",
-      err.response || err.message
-    );
-    throw err;
-  }
-};
-
-export const fetchRecommendedNews = async (): Promise<News> => {
-  try {
-    const response = await api.get("/news/recommendations");
-    console.log("FetchRecommendationNews response data:", response.data);
-    return response.data.data;
-  } catch (err: any) {
-    console.error(
-      "FetchRecommendationNews error details:",
-      err.response || err.message
-    );
-    throw err;
-  }
-};

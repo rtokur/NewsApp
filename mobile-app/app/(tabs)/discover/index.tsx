@@ -1,6 +1,14 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useCallback, useState, useMemo, useEffect } from "react";
-import { FlatList, StyleSheet, Text, View, ActivityIndicator, Keyboard, Pressable } from "react-native";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
@@ -12,16 +20,27 @@ import { useNews } from "@/src/hooks/useNews";
 import { useCategories } from "@/src/hooks/useCategories";
 import { Category } from "@/src/types/category";
 import { useDebounce } from "@/src/hooks/useDebounce";
+import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton"
+import { NewsData } from "@/src/types/news";
+
+type SkeletonItem = { _skeleton: true };
+type ListItem = NewsData | SkeletonItem;
+
+const SKELETON_DATA: SkeletonItem[] = Array.from(
+  { length: 6 },
+  () => ({ _skeleton: true })
+);
 
 export default function DiscoverScreen() {
   const { categories, loadingCategories, errorCategories } = useCategories();
-  const allCategory: Category = {
+  const allCategory = useMemo(() => ({
     id: 0,
     name: "All",
     newsCount: categories.length,
-  };
+  }), [categories.length]);
 
-  const [selectedCategory, setSelectedCategory] = useState<Category>(allCategory);
+  const [selectedCategory, setSelectedCategory] =
+    useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
   const [page, setPage] = useState(1);
@@ -41,28 +60,58 @@ export default function DiscoverScreen() {
 
   useEffect(() => {
     setPage(1);
-  }, [sortOrder, selectedCategory.id, debouncedSearch])
+  }, [sortOrder, selectedCategory.id, debouncedSearch]);
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
     setSearchText("");
-  }
+  };
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "DESC" ? "ASC" : "DESC"));
-  }
+  };
 
-  const renderNewsItem = useCallback(
-    ({ item }: any) => (
-      <NewsListItem
-        item={item}
-        onPress={() =>
-          router.push({ pathname: "/news/[id]", params: { id: item.id } })
-        }
-      />
-    ),
+  const renderItem = useCallback(
+    ({ item }: { item: ListItem }) =>
+      "_skeleton" in item ? (
+        <NewsListItemSkeleton />
+      ) : (
+        <NewsListItem
+          item={item}
+          onPress={() =>
+            router.push({
+              pathname: "/news/[id]",
+              params: { id: item.id },
+            })
+          }
+        />
+      ),
     []
-  );
+  );  
+
+  const DiscoverHeader = useMemo(() => {
+    return (
+      <>
+        <Text style={styles.title}>Discover</Text>
+        <Text style={styles.subtitle}>News from all around the world</Text>
+  
+        <SearchBar
+          value={searchText}
+          onChangeText={setSearchText}
+          onClear={() => setSearchText("")}
+          placeholder="Search"
+          sortOrder={sortOrder}
+          onToggleSort={toggleSortOrder}
+        />
+  
+        <CategoryList
+          categories={categoryList}
+          selectedCategory={selectedCategory}
+          onSelect={handleCategorySelect}
+        />
+      </>
+    );
+  }, [searchText, sortOrder, selectedCategory, categoryList]);  
 
   if (loadingCategories) {
     return (
@@ -88,53 +137,39 @@ export default function DiscoverScreen() {
   );
 
   return (
-    <Pressable
-      style={{ flex: 1 }}
-      onPress={Keyboard.dismiss}
-      accessible={false}
-    >
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View>
-          <Text style={styles.title}>Discover</Text>
-          <Text style={styles.subtitle}>News from all around the world</Text>
-
-          <SearchBar
-            value={searchText}
-            onChangeText={setSearchText}
-            onClear={() => setSearchText("")}
-            placeholder="Search"
-            sortOrder={sortOrder}
-            onToggleSort={toggleSortOrder}
-          />
-
-          <CategoryList
-            categories={categoryList}
-            selectedCategory={selectedCategory}
-            onSelect={handleCategorySelect}
-          />
-
-{loading && page === 1 && (
-    <View style={styles.inlineLoader}>
-      <ActivityIndicator size="small" color="black" />
-    </View>
-  )}
-        </View>
-
-        <FlatList
-          data={data ?? []}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderNewsItem}
-          ListEmptyComponent={ListEmpty}
-          showsVerticalScrollIndicator={false}
-          onEndReached={() => {
-            if (!loading && hasMore) {
-              setPage(prev => prev + 1);
-            }
-          }}
-          onEndReachedThreshold={0.6}
-        />
-      </SafeAreaView>
-    </Pressable>
+    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <FlatList<ListItem>
+        data={initialLoading ? SKELETON_DATA : data ?? []}
+        keyExtractor={(item, index) =>
+          "_skeleton" in item
+            ? `skeleton-${index}`
+            : item.id.toString()
+        }
+        renderItem={renderItem}
+        ListHeaderComponent={DiscoverHeader}
+        ListEmptyComponent={
+          !loading && (data?.length ?? 0) === 0 ? ListEmpty : null
+        }
+        ListFooterComponent={
+          loading && page > 1 ? (
+            <View style={styles.inlineLoader}>
+              <ActivityIndicator />
+            </View>
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: 20 }}
+        onEndReached={() => {
+          if (!loading && hasMore) {
+            setPage((prev) => prev + 1);
+          }
+        }}
+        onEndReachedThreshold={0.6}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+      />
+    </SafeAreaView>
+  </Pressable>  
   );
 }
 
@@ -175,5 +210,5 @@ const styles = StyleSheet.create({
   inlineLoader: {
     paddingVertical: 12,
     alignItems: "center",
-  }
+  },
 });

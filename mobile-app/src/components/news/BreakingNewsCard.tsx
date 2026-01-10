@@ -8,10 +8,10 @@ import {
   View,
 } from "react-native";
 import { timeAgo } from "../../utils/timeAgo";
-import { News } from "../../types/news";
+import { NewsData } from "../../types/news";
 
 interface Props {
-  item: News;
+  item: NewsData;
   scale: Animated.AnimatedInterpolation<number>;
   width: number;
   onPress?: () => void;
@@ -45,7 +45,7 @@ export function BreakingNewsCard({ item, scale, width, onPress }: Props) {
             )}
             <View style={styles.cardSourceContainer}>
               <Text style={styles.cardSourceName}>
-                {item.source ?? "Unknown"}
+                {item.source?.name ?? "Unknown"}
               </Text>
               <Text style={styles.dot}>•</Text>
               <Text style={styles.date}>
