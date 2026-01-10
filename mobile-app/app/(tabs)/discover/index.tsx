@@ -20,24 +20,28 @@ import { useNews } from "@/src/hooks/useNews";
 import { useCategories } from "@/src/hooks/useCategories";
 import { Category } from "@/src/types/category";
 import { useDebounce } from "@/src/hooks/useDebounce";
-import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton"
+import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 import { NewsData } from "@/src/types/news";
 
 type SkeletonItem = { _skeleton: true };
 type ListItem = NewsData | SkeletonItem;
 
-const SKELETON_DATA: SkeletonItem[] = Array.from(
-  { length: 6 },
-  () => ({ _skeleton: true })
-);
+const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
+  _skeleton: true,
+}));
+
+const MIN_SEARCH_LENGTH = 3;
 
 export default function DiscoverScreen() {
   const { categories, loadingCategories, errorCategories } = useCategories();
-  const allCategory = useMemo(() => ({
-    id: 0,
-    name: "All",
-    newsCount: categories.length,
-  }), [categories.length]);
+  const allCategory = useMemo(
+    () => ({
+      id: 0,
+      name: "All",
+      newsCount: categories.length,
+    }),
+    [categories.length]
+  );
 
   const [selectedCategory, setSelectedCategory] =
     useState<Category>(allCategory);
@@ -51,16 +55,35 @@ export default function DiscoverScreen() {
 
   const debouncedSearch = useDebounce(searchText, 400);
 
+  const effectiveSearch =
+    debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined;
+
   const { data, loading, initialLoading, error, hasMore } = useNews({
     page,
     categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
-    search: debouncedSearch,
+    search: effectiveSearch,
     sortOrder,
   });
+
+  const [showSkeleton, setShowSkeleton] = useState(true);
+  const canShowEmpty =
+    !showSkeleton && !initialLoading && !loading && (data?.length ?? 0) === 0;
 
   useEffect(() => {
     setPage(1);
   }, [sortOrder, selectedCategory.id, debouncedSearch]);
+
+  useEffect(() => {
+    if (!initialLoading) {
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(true);
+    }
+  }, [initialLoading]);
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
@@ -87,14 +110,14 @@ export default function DiscoverScreen() {
         />
       ),
     []
-  );  
+  );
 
   const DiscoverHeader = useMemo(() => {
     return (
       <>
         <Text style={styles.title}>Discover</Text>
         <Text style={styles.subtitle}>News from all around the world</Text>
-  
+
         <SearchBar
           value={searchText}
           onChangeText={setSearchText}
@@ -103,7 +126,7 @@ export default function DiscoverScreen() {
           sortOrder={sortOrder}
           onToggleSort={toggleSortOrder}
         />
-  
+
         <CategoryList
           categories={categoryList}
           selectedCategory={selectedCategory}
@@ -111,7 +134,7 @@ export default function DiscoverScreen() {
         />
       </>
     );
-  }, [searchText, sortOrder, selectedCategory, categoryList]);  
+  }, [searchText, sortOrder, selectedCategory, categoryList]);
 
   if (loadingCategories) {
     return (
@@ -137,39 +160,39 @@ export default function DiscoverScreen() {
   );
 
   return (
-    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <FlatList<ListItem>
-        data={initialLoading ? SKELETON_DATA : data ?? []}
-        keyExtractor={(item, index) =>
-          "_skeleton" in item
-            ? `skeleton-${index}`
-            : item.id.toString()
-        }
-        renderItem={renderItem}
-        ListHeaderComponent={DiscoverHeader}
-        ListEmptyComponent={
-          !loading && (data?.length ?? 0) === 0 ? ListEmpty : null
-        }
-        ListFooterComponent={
-          loading && page > 1 ? (
-            <View style={styles.inlineLoader}>
-              <ActivityIndicator />
-            </View>
-          ) : null
-        }
-        contentContainerStyle={{ paddingBottom: 20 }}
-        onEndReached={() => {
-          if (!loading && hasMore) {
-            setPage((prev) => prev + 1);
+    <Pressable
+      style={{ flex: 1 }}
+      onPress={Keyboard.dismiss}
+      accessible={false}
+    >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <FlatList<ListItem>
+          data={showSkeleton ? SKELETON_DATA : data}
+          keyExtractor={(item, index) =>
+            "_skeleton" in item ? `skeleton-${index}` : item.id.toString()
           }
-        }}
-        onEndReachedThreshold={0.6}
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-      />
-    </SafeAreaView>
-  </Pressable>  
+          renderItem={renderItem}
+          ListHeaderComponent={DiscoverHeader}
+          ListEmptyComponent={canShowEmpty ? ListEmpty : null}
+          ListFooterComponent={
+            loading && page > 1 ? (
+              <View style={styles.inlineLoader}>
+                <ActivityIndicator />
+              </View>
+            ) : null
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+          onEndReached={() => {
+            if (!loading && hasMore) {
+              setPage((prev) => prev + 1);
+            }
+          }}
+          onEndReachedThreshold={0.6}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+        />
+      </SafeAreaView>
+    </Pressable>
   );
 }
 

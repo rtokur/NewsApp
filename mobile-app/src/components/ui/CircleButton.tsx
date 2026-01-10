@@ -1,14 +1,31 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
+import Material from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, ViewStyle } from "react-native";
 
+type IconType = "feather" | "antdesign" | "material";
+
 type Props = {
-  icon: keyof typeof Feather.glyphMap | keyof typeof AntDesign.glyphMap;
+  icon: string;
+  iconType: IconType;
   onPress: () => void;
   style?: ViewStyle;
 };
 
-export function CircleButton({ icon, onPress, style }: Props) {
+export function CircleButton({ icon, iconType, onPress, style }: Props) {
+  const renderIcon = () => {
+    switch (iconType) {
+      case "feather":
+        return <Feather name={icon as any} size={20} color="black" />;
+      case "antdesign":
+        return <AntDesign name={icon as any} size={20} color="black" />;
+      case "material":
+        return <Material name={icon as any} size={20} color="black" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Pressable
       onPress={onPress}
@@ -18,28 +35,16 @@ export function CircleButton({ icon, onPress, style }: Props) {
         style,
       ]}
     >
-      {icon in Feather.glyphMap ? (
-        <Feather
-          name={icon as keyof typeof Feather.glyphMap}
-          size={20}
-          color="black"
-        />
-      ) : (
-        <AntDesign
-          name={icon as keyof typeof AntDesign.glyphMap}
-          size={20}
-          color="black"
-        />
-      )}
+      {renderIcon()}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#F2F2F7",
     justifyContent: "center",
     alignItems: "center",

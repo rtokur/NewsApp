@@ -3,15 +3,27 @@ import { formatDate } from "../../utils/formatDate";
 import { NewsDetail } from "../../types/newsDetail";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRef } from "react";
+import { Animated } from "react-native";
 
 interface Props {
   news: NewsDetail;
 }
 
 export function NewsDetailCard({ news }: Props) {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const blurOpacity = scrollY.interpolate({
+    inputRange: [0, 20],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
   return (
     <View style={styles.card}>
-      <View style={styles.topBlurContainer} pointerEvents="none">
+      <Animated.View
+        style={[styles.topBlurContainer, { opacity: blurOpacity }]}
+        pointerEvents="none"
+      >
         <BlurView intensity={18} tint="light" style={styles.blur} />
         <LinearGradient
           colors={[
@@ -21,15 +33,20 @@ export function NewsDetailCard({ news }: Props) {
             "rgba(255,255,255,0.25)",
             "rgba(255,255,255,0.0)",
           ]}
-          locations={[0, 0.25, 0.5, 0.75, 1]}
+          locations={[1, 0.75, 0.5, 0.25, 0]}
           style={styles.gradient}
         />
-      </View>
+      </Animated.View>
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <Animated.ScrollView
+  contentContainerStyle={styles.content}
+  showsVerticalScrollIndicator={false}
+  scrollEventThrottle={16}
+  onScroll={Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: true }
+  )}
+>
         <View style={styles.sourceRow}>
           <Image source={{ uri: news.source.logoUrl }} style={styles.logo} />
           <View>
@@ -39,7 +56,7 @@ export function NewsDetailCard({ news }: Props) {
         </View>
 
         <Text style={styles.text}>{news.content}</Text>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -55,11 +72,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 35,
+    paddingTop: 20,
   },
   topBlurContainer: {
     position: "absolute",
-    height: 35,
+    height: 40,
     top: 0,
     left: 0,
     right: 0,

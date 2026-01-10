@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { timeAgo } from "../../utils/timeAgo";
 import { NewsDetail } from "../../types/newsDetail";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 interface Props {
   news: NewsDetail;
@@ -43,7 +44,7 @@ export function NewsDetailHeader({ news }: Props) {
       <SafeAreaView edges={["top"]} style={styles.header}>
         <Pressable onPress={router.back}>
           <BlurView intensity={25} tint="dark" style={styles.icon}>
-            <Feather name="arrow-left" size={22} color="#fff" />
+            <MaterialIcons name="arrow-back-ios-new" size={22} color="#fff" />
           </BlurView>
         </Pressable>
 

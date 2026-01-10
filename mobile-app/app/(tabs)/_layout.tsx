@@ -34,6 +34,7 @@ export default function TabsLayout() {
           headerLeft: () => (
             <CircleButton
               icon="menu"
+              iconType="antdesign"
               onPress={() => console.log("Menu button pressed")}
               style={{ marginLeft: 15, marginBottom: 10 }}
             />
@@ -42,11 +43,13 @@ export default function TabsLayout() {
             <>
               <CircleButton
                 icon="search"
+                iconType="feather"
                 onPress={() => router.push("/discover")}
                 style={{ marginRight: 10, marginBottom: 10 }}
               />
               <CircleButton
                 icon="bell"
+                iconType="feather"
                 onPress={() => router.push("/favorites")}
                 style={{ marginRight: 15, marginBottom: 10 }}
               />
