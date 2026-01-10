@@ -13,10 +13,10 @@ export class News {
   @Column({ type: 'text' })
   content: string;
 
-  @Column()
+  @Column({name: 'image_url'})
   imageUrl: string;
 
-  @Column({ type: 'timestamptz'})
+  @Column({ name: 'published_at' ,type: 'timestamptz'})
   publishedAt: Date;
 
   @ManyToOne(() => Category, (category) => category.news, {
@@ -25,7 +25,7 @@ export class News {
   })
   category: Category;
 
-  @Column()
+  @Column({ name: 'is_breaking'})
   isBreaking: boolean;
 
   @ManyToOne(() => Source, (source) => source.news, {

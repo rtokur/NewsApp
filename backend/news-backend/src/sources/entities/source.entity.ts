@@ -9,7 +9,7 @@ export class Source {
   @Column()
   name: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'logo_url',type: 'varchar', nullable: true })
   logoUrl: string;
 
   @OneToMany(() => News, (news) => news.source)
