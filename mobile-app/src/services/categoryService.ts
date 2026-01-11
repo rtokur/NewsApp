@@ -8,7 +8,6 @@ export const fetchCategories = async (): Promise<Category[]> => {
         console.log("FetchCategories response data:", response.data);
         return response.data;
     } catch (err: any) {
-        console.error("FetchCategories error details:", err.response || err.message);
         throw err;
     }
 };

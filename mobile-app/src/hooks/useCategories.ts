@@ -15,7 +15,7 @@ export function useCategories() {
         const result = await fetchCategories();
         if (isMounted) setCategories(result);
       } catch {
-        if (isMounted) setError("Failed to load news");
+        if (isMounted) setError("Failed to load categories");
       } finally {
         if (isMounted) setLoading(false);
       }

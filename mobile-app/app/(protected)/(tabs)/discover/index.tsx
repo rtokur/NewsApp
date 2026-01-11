@@ -146,7 +146,7 @@ export default function DiscoverScreen() {
 
   if (error || errorCategories) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
+      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
         <Text>{error || errorCategories}</Text>
       </SafeAreaView>
     );

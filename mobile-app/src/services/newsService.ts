@@ -27,14 +27,21 @@ export async function fetchNewsByType<T>({
     "recommendations-highlight": "v1/news/recommendations/highlight",
   };
 
+  const isHighlightEndpoint = type.includes("highlight");
+  
+  const params: Record<string, any> = {};
+  
+  if (!isHighlightEndpoint) {
+    params.page = page;
+    params.sortOrder = sortOrder;
+    if (limit) params.limit = limit;
+  }
+  
+  if (categoryId) params.categoryId = categoryId;
+  if (search) params.search = search;
+
   const response = await api.get(endpointMap[type], {
-    params: {
-      page,
-      limit,
-      categoryId,
-      search,
-      sortOrder,
-    },
+    params: Object.keys(params).length > 0 ? params : undefined,
   });
 
   return response.data;

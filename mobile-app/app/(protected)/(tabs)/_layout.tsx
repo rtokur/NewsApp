@@ -1,11 +1,19 @@
 import { CircleButton } from "@/src/components/ui/CircleButton";
+import { AuthContext } from "@/src/context/AuthContext";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Fontisto from "@expo/vector-icons/Fontisto";
-import { Tabs, router } from "expo-router";
+import { Redirect, Tabs, router } from "expo-router";
+import { useContext } from "react";
 import { Text, View } from "react-native";
 
 export default function TabsLayout() {
+  const {isLoggedIn} = useContext(AuthContext);
+
+  if (!isLoggedIn) {
+    return <Redirect href="/login"/>
+  }
+  
   return (
     <Tabs
       screenOptions={{

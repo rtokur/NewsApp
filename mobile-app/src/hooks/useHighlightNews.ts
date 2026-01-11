@@ -15,7 +15,7 @@ export function useHighlightNews(type: "breaking-highlight" | "recommendations-h
         const result = await fetchNewsByType<HighlightResponse>({ type });
         if (isMounted) setData(result.data);
       } catch (err) {
-        if (isMounted) setError("Haber yüklenemedi");
+        if (isMounted) setError("News could not be loaded");
       } finally {
         if (isMounted) setLoading(false);
       }

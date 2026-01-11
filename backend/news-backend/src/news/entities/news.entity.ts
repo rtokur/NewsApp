@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Category } from '../../categories/entities';
 import { Source } from 'src/sources/entities/source.entity';
 
@@ -23,6 +23,7 @@ export class News {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
 
   @Column({ name: 'is_breaking'})
@@ -32,5 +33,6 @@ export class News {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ name: 'source_id' })
   source: Source;
 }
