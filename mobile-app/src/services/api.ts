@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { router } from "expo-router";
 import { Platform } from "react-native";
+import { clearTokens, getAccessToken, getRefreshToken, setAccesssToken } from "../utils/storage";
 
 const BASE_URL =
   Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
@@ -30,7 +31,7 @@ const processQueue = (error: any, token: string | null = null) => {
 };
 
 async function refreshTokenRequest(): Promise<string> {
-  const refreshToken = await AsyncStorage.getItem("refreshToken");
+  const refreshToken = await getRefreshToken();
 
   if (!refreshToken) {
     throw new Error("NO_REFRESH_TOKEN");
@@ -42,7 +43,7 @@ async function refreshTokenRequest(): Promise<string> {
 
   const newAccessToken = response.data.accessToken;
 
-  await AsyncStorage.setItem("accessToken", newAccessToken);
+  await setAccesssToken(newAccessToken);
 
   return newAccessToken;
 }
@@ -50,7 +51,7 @@ async function refreshTokenRequest(): Promise<string> {
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem("accessToken");
+      const token = await getAccessToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -100,8 +101,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
 
-        await AsyncStorage.removeItem("accessToken");
-        await AsyncStorage.removeItem("refreshToken");
+        await clearTokens();
         await AsyncStorage.removeItem("rememberMe");
 
         router.replace("/login");

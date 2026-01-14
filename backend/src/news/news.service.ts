@@ -1,24 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { News } from './entities/news.entity';
 import { GetNewsDto } from './dto/get-news.dto';
 import { NewsDetailResponseDto } from './dto/news-detail-response.dto';
 import { GetHighlightNewsDto } from './dto/get-highlight-news.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { buildCacheKey } from './cache.util';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class NewsService {
+  private readonly cacheTTL = 60; 
+
   constructor(
     @InjectRepository(News)
     private readonly newsRepository: Repository<News>,
+
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
 
   async findAll(query: GetNewsDto) {
+    const cacheKey = buildCacheKey('news:list', query);
+    const cached = await this.cacheManager.get(cacheKey);
+
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
+
+    console.log('FROM POSTGRES');
     const { qb, page, limit } = this.buildBaseQuery(query);
 
     const [news, total] = await qb.getManyAndCount();
 
-    return {
+    const response = {
       data: news.map(this.mapToListItem),
       meta: {
         total,
@@ -26,12 +43,23 @@ export class NewsService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-    };
+    }
+
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   async findBreakingHighlight({ limit }: GetHighlightNewsDto) {
     const take = limit ?? 5;
 
+    const cacheKey = `news:breaking:highlight:limit=${take}` ;
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
+    
     const news = await this.newsRepository.find({
       where: { isBreaking: true },
       order: { publishedAt: 'DESC' },
@@ -39,13 +67,23 @@ export class NewsService {
       relations: ['category', 'source'],
     });
 
-    return {
+    const response = {
       data: news.map(this.mapToListItem),
     };
+
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   async findRecommendationsHighlight({ limit }: GetHighlightNewsDto) {
     const take = limit ?? 5;
+    const cacheKey = `news:recommendations:highlight:limit=${take}`;
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
 
     const news = await this.newsRepository.find({
       where: { isBreaking: false },
@@ -54,19 +92,30 @@ export class NewsService {
       relations: ['category', 'source'],
     });
 
-    return {
+    const response = {
       data: news.map(this.mapToListItem),
     };
+
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   async findBreakingNews(query: GetNewsDto) {
+    const cacheKey = buildCacheKey('news:breaking:list', query);
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
+
     const { qb, page, limit } = this.buildBaseQuery(query, (qb) =>
       qb.andWhere('news.isBreaking = true'),
     );
 
     const [news, total] = await qb.getManyAndCount();
 
-    return {
+    const response = {
       data: news.map(this.mapToListItem),
       meta: {
         total,
@@ -75,16 +124,26 @@ export class NewsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   async findRecommendations(query: GetNewsDto) {
+    const cacheKey = buildCacheKey('news:recommendations:list', query);
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
+
     const { qb, page, limit } = this.buildBaseQuery(query, (qb) =>
       qb.andWhere('news.isBreaking = false'),
     );
 
     const [news, total] = await qb.getManyAndCount();
 
-    return {
+    const response = {
       data: news.map(this.mapToListItem),
       meta: {
         total,
@@ -93,9 +152,20 @@ export class NewsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   async findOne(id: number): Promise<NewsDetailResponseDto> {
+    const cacheKey = `news:detail:${id}`;
+    const cached = await this.cacheManager.get<NewsDetailResponseDto>(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return cached;
+    }
+
+    console.log('FROM POSTGRES');
     const news = await this.newsRepository.findOne({
       where: { id },
       relations: ['category', 'source'],
@@ -104,8 +174,7 @@ export class NewsService {
     if (!news) {
       throw new NotFoundException('News not found');
     }
-
-    return {
+    const response: NewsDetailResponseDto = {
       id: news.id,
       title: news.title,
       content: news.content,
@@ -118,6 +187,10 @@ export class NewsService {
       },
       category: { id: news.category.id, name: news.category.name },
     };
+
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+
+    return response;
   }
 
   private buildBaseQuery(

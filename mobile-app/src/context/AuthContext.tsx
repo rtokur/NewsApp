@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { loginRequest, registerRequest, forgotPasswordRequest } from "../services/authService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setAccesssToken, getAccessToken, removeAccessToken, clearTokens, setRefreshToken } from "../utils/storage";
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -32,14 +33,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const checkAuth = async () => {
       try {
         const shouldRemember = await AsyncStorage.getItem("rememberMe");
-        const token = await AsyncStorage.getItem("accessToken");
+        const token = await getAccessToken();
   
-        if (shouldRemember === "true" && token) {
-          setIsLoggedIn(true);
-        } else {
-          await AsyncStorage.removeItem("accessToken");
-          await AsyncStorage.removeItem("rememberMe");
+        if (shouldRemember !== "true") {
+          await clearTokens();
           setIsLoggedIn(false);
+          return;
+        } 
+        if (token) {
+          setIsLoggedIn(true);
+          router.replace("/");
         }
       } catch (error) {
         console.error("Auth check failed", error);
@@ -66,8 +69,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         throw new Error("INVALID_CREDENTIALS");
       }
   
-      await AsyncStorage.setItem("accessToken", response.accessToken);
-      await AsyncStorage.setItem("refreshToken", response.refreshToken);      
+      await setAccesssToken(response.accessToken);
+      await setRefreshToken(response.refreshToken);      
       await AsyncStorage.setItem("rememberMe", rememberMe ? "true" : "false");
       
       setIsLoggedIn(true);
@@ -120,8 +123,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
 
   const logOut = async () => {
-    await AsyncStorage.removeItem("accessToken");
-    await AsyncStorage.removeItem("refreshToken");
+    await clearTokens();
     await AsyncStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
     router.replace("/login")

@@ -14,23 +14,14 @@ export function useNews({
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-
-  useEffect(() => {
-    setData([]);
-    setHasMore(true);
-  }, [type, categoryId, search, sortOrder]);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadNews = async () => {
       try {
-        if (page === 1) {
-          setInitialLoading(true);
-        } else {
-          setLoading(true);
-        }
+        page === 1 ? setInitialLoading(true) : setLoading(true);
     
         const result = await fetchNewsByType<PaginatedResponse<NewsData>>({
           page,
@@ -43,18 +34,9 @@ export function useNews({
 
         if (!isMounted) return;
 
-        setData((prev) => {
-          if (page === 1) return result.data;
-
-          const existingIds = new Set(prev.map((item) => item.id));
-          const newItems = result.data.filter(
-            (item) => !existingIds.has(item.id)
-          );
-
-          return [...prev, ...newItems];
-        });
-
-        setHasMore(page < (result.meta.totalPages ?? 1));
+        setData(result.data);
+        setTotalPages(result.meta.totalPages ?? 1);
+        setError(null);
       } catch {
         if (isMounted) setError("Failed to load news");
       } finally {
@@ -71,5 +53,5 @@ export function useNews({
     };
   }, [page, type, categoryId, search, sortOrder]);
 
-  return { data, loading, initialLoading, error, hasMore };
+  return { data, loading, initialLoading, error, totalPages };
 }

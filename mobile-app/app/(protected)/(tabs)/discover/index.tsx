@@ -1,5 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useCallback, useState, useMemo, useEffect } from "react";
+import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import PaginationBar from "@/src/components/ui/PaginationBar";
 
 import CategoryList from "@/src/components/news/CategoryList";
 import NewsListItem from "@/src/components/news/NewsListItem";
@@ -52,13 +53,15 @@ export default function DiscoverScreen() {
     () => [allCategory, ...categories],
     [categories]
   );
+  const listRef = useRef<FlatList<ListItem>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const debouncedSearch = useDebounce(searchText, 400);
 
   const effectiveSearch =
     debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined;
 
-  const { data, loading, initialLoading, error, hasMore } = useNews({
+  const { data, loading, initialLoading, error, totalPages } = useNews({
     page,
     categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
     search: effectiveSearch,
@@ -74,16 +77,22 @@ export default function DiscoverScreen() {
   }, [sortOrder, selectedCategory.id, debouncedSearch]);
 
   useEffect(() => {
-    if (!initialLoading) {
+    listRef.current?.scrollToOffset({
+      offset: 0,
+      animated: true,
+    });
+    setShowSkeleton(true);
+  }, [page]);
+
+  useEffect(() => {
+    if (!loading && !initialLoading) {
       const timer = setTimeout(() => {
         setShowSkeleton(false);
       }, 500);
 
       return () => clearTimeout(timer);
-    } else {
-      setShowSkeleton(true);
     }
-  }, [initialLoading]);
+  }, [loading, initialLoading]);
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
@@ -167,6 +176,7 @@ export default function DiscoverScreen() {
     >
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <FlatList<ListItem>
+          ref={listRef}
           data={showSkeleton ? SKELETON_DATA : data}
           keyExtractor={(item, index) =>
             "_skeleton" in item ? `skeleton-${index}` : item.id.toString()
@@ -175,23 +185,41 @@ export default function DiscoverScreen() {
           ListHeaderComponent={DiscoverHeader}
           ListEmptyComponent={canShowEmpty ? ListEmpty : null}
           ListFooterComponent={
-            loading && page > 1 ? (
-              <View style={styles.inlineLoader}>
-                <ActivityIndicator />
-              </View>
+            !loading && totalPages > 1 ? (
+              <PaginationBar
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={(newPage) => {
+                  if (newPage !== page) {
+                    setPage(newPage);
+                  }
+                }}
+              />
             ) : null
           }
-          contentContainerStyle={{ paddingBottom: 20 }}
-          onEndReached={() => {
-            if (!loading && hasMore) {
-              setPage((prev) => prev + 1);
-            }
+          onScroll={(event) => {
+            const offsetY = event.nativeEvent.contentOffset.y;
+            setShowScrollTop(offsetY > 300);
           }}
-          onEndReachedThreshold={0.6}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingBottom: 20 }}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         />
       </SafeAreaView>
+      {showScrollTop && (
+        <Pressable
+          style={styles.scrollTopButton}
+          onPress={() => {
+            listRef.current?.scrollToOffset({
+              offset: 0,
+              animated: true,
+            });
+          }}
+        >
+          <Feather name="arrow-up" size={22} color="#FFFFFF" />
+        </Pressable>
+      )}
     </Pressable>
   );
 }
@@ -233,5 +261,21 @@ const styles = StyleSheet.create({
   inlineLoader: {
     paddingVertical: 12,
     alignItems: "center",
+  },
+  scrollTopButton: {
+    position: "absolute",
+    alignSelf: "center",
+    bottom: 80,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#2563EB",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
 });
