@@ -7,6 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { RedisService } from './redis/redis.service';
+import { RedisModule } from './redis/redis.module';
 import Keyv from 'keyv';
 import KeyvRedis from '@keyv/redis';
 
@@ -28,7 +30,7 @@ import KeyvRedis from '@keyv/redis';
           stores: [
             new Keyv({
               store: new KeyvRedis(redisUrl),
-              ttl: 60 * 1000, 
+              ttl: 60 * 1000,
             }),
           ],
         };
@@ -44,12 +46,14 @@ import KeyvRedis from '@keyv/redis';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,
-        }),
-    CategoriesModule, 
+    }),
+    RedisModule,
+    CategoriesModule,
     NewsModule,
-    AuthModule,],
+    AuthModule,
+    RedisModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RedisService],
 })
-
 export class AppModule {}

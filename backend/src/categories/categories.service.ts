@@ -3,27 +3,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities';
 import { CategoryResponseDto } from './dto/category-response.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class CategoriesService {
-  private readonly cacheTTL = 60 * 1000; 
+  private readonly cacheTTL = 60 * 1000;
+
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-
-    @Inject(CACHE_MANAGER)
-    private cacheManager: Cache,
+    private redisService: RedisService,
   ) {}
 
   async findAll(): Promise<CategoryResponseDto[]> {
     const cacheKey = 'categories:all';
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
       console.log('FROM REDIS');
-      return cached as CategoryResponseDto[];
+      return JSON.parse(cached);
     }
 
     console.log('FROM POSTGRES');
@@ -40,8 +38,12 @@ export class CategoriesService {
       newsCount: (category as Category & { newsCount: number }).newsCount,
     }));
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL);
-    
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(response),
+      this.cacheTTL,
+    );
+
     return response;
-  } 
+  }
 }

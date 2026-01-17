@@ -8,6 +8,7 @@ import { GetHighlightNewsDto } from './dto/get-highlight-news.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { buildCacheKey } from './cache.util';
 import { Cache } from 'cache-manager';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class NewsService {
@@ -16,18 +17,16 @@ export class NewsService {
   constructor(
     @InjectRepository(News)
     private readonly newsRepository: Repository<News>,
-
-    @Inject(CACHE_MANAGER)
-    private cacheManager: Cache,
+    private readonly redisService: RedisService,
   ) {}
 
   async findAll(query: GetNewsDto) {
     const cacheKey = buildCacheKey('news:list', query);
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
 
     console.log('FROM POSTGRES');
@@ -45,7 +44,7 @@ export class NewsService {
       },
     }
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL);
 
     return response;
   }
@@ -54,10 +53,10 @@ export class NewsService {
     const take = limit ?? 5;
 
     const cacheKey = `news:breaking:highlight:limit=${take}` ;
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
     
     const news = await this.newsRepository.find({
@@ -71,7 +70,7 @@ export class NewsService {
       data: news.map(this.mapToListItem),
     };
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL,);
 
     return response;
   }
@@ -79,10 +78,10 @@ export class NewsService {
   async findRecommendationsHighlight({ limit }: GetHighlightNewsDto) {
     const take = limit ?? 5;
     const cacheKey = `news:recommendations:highlight:limit=${take}`;
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
 
     const news = await this.newsRepository.find({
@@ -96,17 +95,17 @@ export class NewsService {
       data: news.map(this.mapToListItem),
     };
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL,);
 
     return response;
   }
 
   async findBreakingNews(query: GetNewsDto) {
     const cacheKey = buildCacheKey('news:breaking:list', query);
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
 
     const { qb, page, limit } = this.buildBaseQuery(query, (qb) =>
@@ -124,17 +123,17 @@ export class NewsService {
         totalPages: Math.ceil(total / limit),
       },
     };
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL,);
 
     return response;
   }
 
   async findRecommendations(query: GetNewsDto) {
     const cacheKey = buildCacheKey('news:recommendations:list', query);
-    const cached = await this.cacheManager.get(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
 
     const { qb, page, limit } = this.buildBaseQuery(query, (qb) =>
@@ -152,17 +151,17 @@ export class NewsService {
         totalPages: Math.ceil(total / limit),
       },
     };
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL,);
 
     return response;
   }
 
   async findOne(id: number): Promise<NewsDetailResponseDto> {
     const cacheKey = `news:detail:${id}`;
-    const cached = await this.cacheManager.get<NewsDetailResponseDto>(cacheKey);
+    const cached = await this.redisService.get(cacheKey);
     if (cached) {
       console.log('FROM REDIS');
-      return cached;
+      return JSON.parse(cached);
     }
 
     console.log('FROM POSTGRES');
@@ -188,7 +187,7 @@ export class NewsService {
       category: { id: news.category.id, name: news.category.name },
     };
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.redisService.set(cacheKey, JSON.stringify(response), this.cacheTTL,);
 
     return response;
   }
