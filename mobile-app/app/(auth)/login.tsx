@@ -4,6 +4,8 @@ import {
   StyleSheet,
   Pressable,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useContext, useState } from "react";
@@ -33,7 +35,7 @@ export default function LoginScreen() {
       setError("Please enter a valid email address");
       return;
     }
-    
+
     if (password.length < 6) {
       setError("The password must be at least 6 characters long");
       return;
@@ -52,70 +54,78 @@ export default function LoginScreen() {
 
   return (
     <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Log in</Text>
-        <Text style={styles.subtitle}>
-        Enter your email and password to securely access your account and
-        manage your services.
-        </Text>
-      </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+      >
+        <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Log in</Text>
+            <Text style={styles.subtitle}>
+              Enter your email and password to securely access your account and
+              manage your services.
+            </Text>
+          </View>
 
-      <View style={styles.form}>
-        <AuthInput
-          label="Email"
-          icon="mail"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="example@email.com"
-          keyboardType="email-address"
-        />
+          <View style={styles.form}>
+            <AuthInput
+              label="Email"
+              icon="mail"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="example@email.com"
+              keyboardType="email-address"
+            />
 
-        <AuthInput
-          label="Password"
-          icon="lock"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••"
-          secure={!secure}
-        />
+            <AuthInput
+              label="Password"
+              icon="lock"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••"
+              secure={!secure}
+            />
 
-        <ErrorMessage message={error} />
+            <ErrorMessage message={error} />
 
-        <View style={styles.optionsRow}>
-          <Pressable
-            style={styles.rememberMe}
-            onPress={() => setRememberMe(!rememberMe)}
-          >
-            <View
-              style={[styles.checkbox, rememberMe && styles.checkboxActive]}
-            >
-              {rememberMe && <Feather name="check" size={14} color="#fff" />}
+            <View style={styles.optionsRow}>
+              <Pressable
+                style={styles.rememberMe}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <View
+                  style={[styles.checkbox, rememberMe && styles.checkboxActive]}
+                >
+                  {rememberMe && (
+                    <Feather name="check" size={14} color="#fff" />
+                  )}
+                </View>
+                <Text style={styles.optionText}>Remember Me</Text>
+              </Pressable>
+
+              <Pressable onPress={() => router.push("/forgot-password")}>
+                <Text style={styles.forgotText}>Forgot Password</Text>
+              </Pressable>
             </View>
-            <Text style={styles.optionText}>Remember Me</Text>
-          </Pressable>
 
-          <Pressable onPress={() => router.push("/forgot-password")}>
-            <Text style={styles.forgotText}>Forgot Password</Text>
-          </Pressable>
-        </View>
+            <Pressable
+              style={[styles.button, loading && { opacity: 0.6 }]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>Login</Text>
+            </Pressable>
 
-        <Pressable
-          style={[styles.button, loading && { opacity: 0.6 }]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>Login</Text>
-        </Pressable>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don’t have an account?</Text>
-          <Pressable onPress={() => router.push("/register")}>
-            <Text style={styles.register}> Register</Text>
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don’t have an account?</Text>
+              <Pressable onPress={() => router.push("/register")}>
+                <Text style={styles.register}> Register</Text>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Pressable>
   );
 }

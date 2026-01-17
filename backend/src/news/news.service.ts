@@ -11,7 +11,7 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class NewsService {
-  private readonly cacheTTL = 60; 
+  private readonly cacheTTL = 60 * 1000; 
 
   constructor(
     @InjectRepository(News)
@@ -45,7 +45,7 @@ export class NewsService {
       },
     }
 
-    await this.cacheManager.set(cacheKey, response, this.cacheTTL,);
+    await this.cacheManager.set(cacheKey, response, this.cacheTTL);
 
     return response;
   }

@@ -4,6 +4,8 @@ import {
   StyleSheet,
   Pressable,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useContext, useState } from "react";
@@ -26,9 +28,9 @@ export default function RegisterScreen() {
       setError("Email and password are required");
       return;
     }
-    
+
     if (confirmPassword !== password) {
-      setError("The passwords must be the same")
+      setError("The passwords must be the same");
       return;
     }
 
@@ -44,71 +46,76 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Pressable style={{flex: 1}} onPress={Keyboard.dismiss}>
-      <SafeAreaView edges={["left", "right"]} style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>
-          Create a new account to get started and enjoy seamless access to our
-          features.
-        </Text>
-      </View>
+    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+      >
+        <SafeAreaView edges={["left", "right"]} style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>
+              Create a new account to get started and enjoy seamless access to
+              our features.
+            </Text>
+          </View>
 
-      <View style={styles.form}>
-        <AuthInput
-          label="Full Name"
-          icon="user"
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder="Name"
-        />
+          <View style={styles.form}>
+            <AuthInput
+              label="Full Name"
+              icon="user"
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Name"
+            />
 
-        <AuthInput
-          label="Email"
-          icon="mail"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="example@email.com"
-          keyboardType="email-address"
-        />
+            <AuthInput
+              label="Email"
+              icon="mail"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="example@email.com"
+              keyboardType="email-address"
+            />
 
-        <AuthInput
-          label="Password"
-          icon="lock"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••"
-          secure
-        />
+            <AuthInput
+              label="Password"
+              icon="lock"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••"
+              secure
+            />
 
-        <AuthInput
-          label="Confirm Password"
-          icon="lock"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="••••••"
-          secure
-        />
+            <AuthInput
+              label="Confirm Password"
+              icon="lock"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••"
+              secure
+            />
 
-        <ErrorMessage message={error} />
-        <Pressable
-          style={[styles.button, loading && { opacity: 0.6 }]}
-          onPress={handleRegister}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>Create Account</Text>
-        </Pressable>
+            <ErrorMessage message={error} />
+            <Pressable
+              style={[styles.button, loading && { opacity: 0.6 }]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>Create Account</Text>
+            </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.login}> Login</Text>
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account?</Text>
+              <Pressable onPress={() => router.back()}>
+                <Text style={styles.login}> Login</Text>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Pressable>
-    
   );
 }
 

@@ -5,14 +5,11 @@ import { Platform } from "react-native";
 import { clearTokens, getAccessToken, getRefreshToken, setAccesssToken } from "../utils/storage";
 
 const BASE_URL =
-  Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
+  Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://192.168.0.20:3000";
 
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 let isRefreshing = false;

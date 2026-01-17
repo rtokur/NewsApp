@@ -1,5 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
-import { FlatList, Text, StyleSheet, ActivityIndicator, View, Pressable, Keyboard } from "react-native";
+import {
+  FlatList,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  View,
+  Pressable,
+  Keyboard,
+} from "react-native";
 import NewsListItem from "@/src/components/news/NewsListItem";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +22,7 @@ import CategoryList from "@/src/components/news/CategoryList";
 import Feather from "@expo/vector-icons/Feather";
 import { useNews } from "@/src/hooks/useNews";
 import PaginationBar from "@/src/components/ui/PaginationBar";
+import { CircleButton } from "@/src/components/ui/CircleButton";
 
 type SkeletonItem = { _skeleton: true };
 type ListItem = NewsData | SkeletonItem;
@@ -39,7 +48,7 @@ export default function NewsListScreen() {
     [categories.length]
   );
   const [selectedCategory, setSelectedCategory] =
-  useState<Category>(allCategory);
+    useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
@@ -61,7 +70,7 @@ export default function NewsListScreen() {
     categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
     search: effectiveSearch,
     sortOrder,
-});
+  });
 
   const [showSkeleton, setShowSkeleton] = useState(true);
   const canShowEmpty =
@@ -86,7 +95,7 @@ export default function NewsListScreen() {
       }, 500);
 
       return () => clearTimeout(timer);
-    } 
+    }
   }, [loading, initialLoading]);
 
   const handleCategorySelect = (category: Category) => {
@@ -119,7 +128,26 @@ export default function NewsListScreen() {
   const ListHeader = useMemo(() => {
     return (
       <>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.headerRow}>
+          {/* Sol */}
+          <View style={styles.headerSide}>
+            <CircleButton
+              icon="arrow-back-ios-new"
+              iconType="material"
+              onPress={() => router.back()}
+            />
+          </View>
+
+          {/* Orta */}
+          <View style={styles.headerCenter}>
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+
+          {/* Sağ (denge için boş) */}
+          <View style={styles.headerSide} />
+        </View>
 
         <SearchBar
           value={searchText}
@@ -161,15 +189,15 @@ export default function NewsListScreen() {
       <Text style={styles.emptyText}>No news found</Text>
     </View>
   );
-  
+
   return (
     <Pressable
-    style={{ flex: 1 }}
-    onPress={Keyboard.dismiss}
-    accessible={false}
-  >
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
-    <FlatList<ListItem>
+      style={{ flex: 1 }}
+      onPress={Keyboard.dismiss}
+      accessible={false}
+    >
+      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
+        <FlatList<ListItem>
           ref={listRef}
           data={showSkeleton ? SKELETON_DATA : data}
           keyExtractor={(item, index) =>
@@ -200,8 +228,8 @@ export default function NewsListScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         />
-    </SafeAreaView>
-    {showScrollTop && (
+      </SafeAreaView>
+      {showScrollTop && (
         <Pressable
           style={styles.scrollTopButton}
           onPress={() => {
@@ -228,11 +256,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "700",
-    marginTop: 10,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginHorizontal: 20,
+    marginBottom: 10,
+  },
+
+  headerSide: {
+    width: 44,
+    alignItems: "flex-start",
+  },
+
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 25,
+    fontWeight: "700",
     color: "#111111",
   },
   emptyContainer: {

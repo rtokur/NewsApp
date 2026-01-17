@@ -5,18 +5,34 @@ import { CategoriesModule } from './categories/categories.module';
 import { NewsModule } from './news/news.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
-import * as redisStore from 'cache-manager-ioredis-yet';
+import Keyv from 'keyv';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
-    CacheModule.register({
+    ConfigModule.forRoot({
       isGlobal: true,
-      store: redisStore,
-      host: process.env.REDIS_HOST,
-      port: Number(process.env.REDIS_PORT),
-      ttl: 60,
+    }),
+
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const redisUrl = `redis://${config.get('REDIS_HOST')}:${config.get(
+          'REDIS_PORT',
+        )}`;
+
+        return {
+          stores: [
+            new Keyv({
+              store: new KeyvRedis(redisUrl),
+              ttl: 60 * 1000, 
+            }),
+          ],
+        };
+      },
     }),
 
     TypeOrmModule.forRoot({
@@ -28,14 +44,12 @@ import * as redisStore from 'cache-manager-ioredis-yet';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,
-    }),
+        }),
     CategoriesModule, 
     NewsModule,
-    AuthModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),],
+    AuthModule,],
   controllers: [AppController],
   providers: [AppService],
 })
+
 export class AppModule {}
