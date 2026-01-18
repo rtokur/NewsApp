@@ -1,13 +1,11 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { News } from './entities/news.entity';
 import { GetNewsDto } from './dto/get-news.dto';
 import { NewsDetailResponseDto } from './dto/news-detail-response.dto';
 import { GetHighlightNewsDto } from './dto/get-highlight-news.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { buildCacheKey } from './cache.util';
-import { Cache } from 'cache-manager';
 import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
