@@ -3,6 +3,7 @@ import { AuthContext } from "@/src/context/AuthContext";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Fontisto from "@expo/vector-icons/Fontisto";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Redirect, Tabs, router } from "expo-router";
 import { useContext } from "react";
 import { Text, View } from "react-native";
@@ -22,14 +23,14 @@ export default function TabsLayout() {
         tabBarStyle: {
           height: 75,
           paddingVertical: 12,
-        },
+          paddingHorizontal: 12, // ✅ sadece sağ ve sol dış boşluk
+        },        
         tabBarItemStyle: {
           height: 43,
           borderRadius: 23,
-          marginHorizontal: 10,
           overflow: "hidden",
           marginTop: 10,
-        },
+        },        
         tabBarActiveBackgroundColor: "#007AFF",
         tabBarInactiveBackgroundColor: "transparent",
       }}
@@ -69,14 +70,13 @@ export default function TabsLayout() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: focused ? 20 : 0,
-                minWidth: focused ? 115 : 40,
+                minWidth: focused ? 120 : 40,
                 justifyContent: "center",
               }}
             >
               <FontAwesome
                 name="home"
-                size={22}
+                size={20}
                 color={focused ? "#fff" : "#6B7280"}
               />
               {focused && (
@@ -104,14 +104,13 @@ export default function TabsLayout() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: focused ? 20 : 0,
-                minWidth: focused ? 115 : 40,
+                minWidth: focused ? 120 : 40,
                 justifyContent: "center",
               }}
             >
               <Fontisto
                 name="world-o"
-                size={21}
+                size={20}
                 color={focused ? "#fff" : "#6B7280"}
               />
               {focused && (
@@ -139,14 +138,13 @@ export default function TabsLayout() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: focused ? 20 : 0,
-                minWidth: focused ? 115 : 40,
+                minWidth: focused ? 120 : 40,
                 justifyContent: "center",
               }}
             >
               <Feather
                 name="bookmark"
-                size={21}
+                size={20}
                 color={focused ? "#fff" : "#6B7280"}
               />
               {focused && (
@@ -159,6 +157,40 @@ export default function TabsLayout() {
                   }}
                 >
                   Favorites
+                </Text>
+              )}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                minWidth: focused ? 120 : 40,
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+              name="person-outline"
+              size={20} 
+              color={focused ? "#fff" : "#6B7280"}
+              />
+              {focused && (
+                <Text
+                  style={{
+                    color: "#fff",
+                    marginLeft: 6,
+                    fontSize: 12,
+                    fontWeight: "500",
+                  }}
+                >
+                  Profile
                 </Text>
               )}
             </View>

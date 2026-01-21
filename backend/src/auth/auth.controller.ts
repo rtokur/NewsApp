@@ -6,13 +6,9 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
-
-interface RequestWithUser extends Request {
-  user: {
-    sub: number;
-    email: string;
-  };
-}
+import { JwtPayload } from './jwt-payload.interface';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ClientIp } from 'src/common/decorators/client-ip.decorator';
 
 @ApiTags('Auth')
 @Controller('v1/auth')
@@ -31,8 +27,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'JWT tokens returned' })
   @ApiResponse({ status: 401, description: 'Invalid credentials or too many login attempts' })
-  login(@Body() dto: LoginDto, @Req() req: Request) {
-    const ip = req.ip || req.socket.remoteAddress || '';
+  login(@Body() dto: LoginDto, @ClientIp() ip: string) {
   return this.authService.login(dto, ip);
   } 
   @Post('refresh')
@@ -49,7 +44,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'User logged out' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  logout(@Req() req: RequestWithUser) {
-    return this.authService.logout(req.user.sub);
+  logout(@CurrentUser() user: JwtPayload) {
+    return this.authService.logout(user.sub);
   }
 }

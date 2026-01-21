@@ -14,6 +14,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { timeAgo } from "../../utils/timeAgo";
 import { NewsDetail } from "../../types/newsDetail";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useContext } from "react";
+import { FavoriteContext } from "@/src/context/FavoriteContext";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 interface Props {
   news: NewsDetail;
@@ -22,6 +25,8 @@ interface Props {
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export function NewsDetailHeader({ news }: Props) {
+  const { toggleFavorite, isFavorite} = useContext(FavoriteContext)
+  const saved = isFavorite(news.id)
   return (
     <>
       <ImageBackground source={{ uri: news.imageUrl }} style={styles.bg}>
@@ -49,9 +54,12 @@ export function NewsDetailHeader({ news }: Props) {
         </Pressable>
 
         <View style={{ flexDirection: "row", gap: 12 }}>
+          <Pressable onPress={() => toggleFavorite(news.id)}>
           <BlurView intensity={25} tint="dark" style={styles.icon}>
-            <Feather name="bookmark" size={22} color="#fff" />
+            <FontAwesome name={saved ? "bookmark" : "bookmark-o"} size={22} color="#fff" />
           </BlurView>
+          </Pressable>
+          
           <BlurView intensity={25} tint="dark" style={styles.icon}>
             <Feather name="share-2" size={22} color="#fff" />
           </BlurView>

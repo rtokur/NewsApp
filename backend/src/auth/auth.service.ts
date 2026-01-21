@@ -8,6 +8,7 @@ import { LoginDto } from './dto/login.dto';
 import { User } from 'src/users/entities/user.entity';
 import { RedisService } from 'src/redis/redis.service';
 import * as crypto from 'crypto';
+import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -92,8 +93,8 @@ export class AuthService {
     }
 
 
-    async logout(@Req() req) {
-        await this.redisService.del(`refresh:${req.user.sub}`);
+    async logout(userId: number) {
+        await this.redisService.del(`refresh:${userId}`);
 
         return { message: 'Logged out successfully' };
     }

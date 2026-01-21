@@ -9,6 +9,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { RedisService } from './redis/redis.service';
 import { RedisModule } from './redis/redis.module';
+import { FavoritesController } from './favorites/favorites.controller';
+import { FavoritesService } from './favorites/favorites.service';
+import { FavoritesModule } from './favorites/favorites.module';
 import Keyv from 'keyv';
 import KeyvRedis from '@keyv/redis';
 
@@ -52,6 +55,7 @@ import KeyvRedis from '@keyv/redis';
     NewsModule,
     AuthModule,
     RedisModule,
+    FavoritesModule,
   ],
   controllers: [AppController],
   providers: [AppService, RedisService],

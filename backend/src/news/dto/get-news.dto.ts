@@ -42,7 +42,7 @@ export class GetNewsDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({enum: SortOrder, default: SortOrder.DESC})
   @IsString()
   @IsOptional()
   sortOrder?: SortOrder = SortOrder.DESC;

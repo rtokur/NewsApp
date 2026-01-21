@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
+import { Favorite } from "src/favorites/entities/favorites.entity";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -19,4 +20,7 @@ export class User {
 
     @CreateDateColumn({name: 'created_at'})
     createdAt: Date;
+
+    @OneToMany(() => Favorite, (favorite) => favorite.user)
+    favorites: Favorite[];
 }

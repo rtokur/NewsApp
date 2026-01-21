@@ -35,4 +35,4 @@ export type NewsType =
   | "breaking"
   | "recommendations"
   | "breaking-highlight"
-  | "recommendations-highlight";
+  | "recommendations-highlight" ;

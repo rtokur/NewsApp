@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Category } from '../../categories/entities';
 import { Source } from 'src/sources/entities/source.entity';
+import { Favorite } from 'src/favorites/entities/favorites.entity';
 
 @Entity('news')
 export class News {
@@ -35,4 +36,7 @@ export class News {
   })
   @JoinColumn({ name: 'source_id' })
   source: Source;
+
+  @OneToMany(() => Favorite, (favorite) => favorite.news)
+  favorites: Favorite[];
 }

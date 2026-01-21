@@ -1,10 +1,13 @@
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { formatDate } from "../../utils/formatDate";
 import { NewsDetail } from "../../types/newsDetail";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { Animated } from "react-native";
+import { BlurView } from "expo-blur";
+
+export const AnimatedBlurView =
+  Animated.createAnimatedComponent(BlurView);
 
 interface Props {
   news: NewsDetail;
@@ -13,30 +16,53 @@ interface Props {
 export function NewsDetailCard({ news }: Props) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const blurOpacity = scrollY.interpolate({
-    inputRange: [0, 20],
-    outputRange: [0, 1],
+    inputRange: [0, 30, 90],
+    outputRange: [0, 0.6, 1],
     extrapolate: "clamp",
   });
+  
+  const blurIntensity = scrollY.interpolate({
+    inputRange: [0, 40, 120],
+    outputRange: [0, 12, 28],
+    extrapolate: "clamp",
+  });
+  
+  const gradientOpacity = scrollY.interpolate({
+    inputRange: [0, 20, 100],
+    outputRange: [0, 0.8, 1],
+    extrapolate: "clamp",
+  });  
 
   return (
     <View style={styles.card}>
-      <Animated.View
-        style={[styles.topBlurContainer, { opacity: blurOpacity }]}
-        pointerEvents="none"
-      >
-        <BlurView intensity={18} tint="light" style={styles.blur} />
-        <LinearGradient
-          colors={[
-            "rgba(255,255,255,0.98)",
-            "rgba(255,255,255,0.85)",
-            "rgba(255,255,255,0.55)",
-            "rgba(255,255,255,0.25)",
-            "rgba(255,255,255,0.0)",
-          ]}
-          locations={[1, 0.75, 0.5, 0.25, 0]}
-          style={styles.gradient}
-        />
-      </Animated.View>
+<Animated.View
+  style={[
+    styles.topBlurContainer,
+    { opacity: blurOpacity },
+  ]}
+  pointerEvents="none"
+>
+  {/* BLUR */}
+  <AnimatedBlurView
+    intensity={blurIntensity}
+    tint="light"
+    style={styles.blur}
+  />
+
+  {/* FADE MASK – BLUR'U YUMUŞAK BİTİRİR */}
+  <LinearGradient
+    colors={[
+      "rgba(255,255,255,1)",
+      "rgba(255,255,255,0.9)",
+      "rgba(255,255,255,0.6)",
+      "rgba(255,255,255,0.25)",
+      "rgba(255,255,255,0.0)",
+    ]}
+    locations={[0, 0.25, 0.5, 0.75, 1]}
+    style={styles.blurFadeMask}
+  />
+</Animated.View>
+
 
       <Animated.ScrollView
   contentContainerStyle={styles.content}
@@ -44,7 +70,7 @@ export function NewsDetailCard({ news }: Props) {
   scrollEventThrottle={16}
   onScroll={Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
+    { useNativeDriver: false }
   )}
 >
         <View style={styles.sourceRow}>
@@ -76,17 +102,26 @@ const styles = StyleSheet.create({
   },
   topBlurContainer: {
     position: "absolute",
-    height: 40,
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 10,
+    height: 110,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     overflow: "hidden",
+    zIndex: 10,
   },
+  
   blur: {
     ...StyleSheet.absoluteFillObject,
+  },
+  
+  blurFadeMask: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 80, 
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,

@@ -16,6 +16,10 @@
     "paths": {
       "src/*": ["src/*"]
     },
+    "typeRoots": [
+      "node_modules/@types",
+      "src/types"
+    ],
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
