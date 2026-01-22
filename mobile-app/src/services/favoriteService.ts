@@ -12,16 +12,27 @@ export interface FavoritesResponse {
 
 export async function fetchFavorites(
   limit = 10,
-  cursor?: string
+  cursor?: string,
+  options?: {
+    categoryId?: number;
+    search?: string;
+    sortOrder?: "ASC" | "DESC";
+  }
 ): Promise<FavoritesResponse> {
-  const params: any = { limit };
-  if (cursor) {
-    params.cursor = cursor;
+  const params: any = {
+    limit,
+    sortOrder: options?.sortOrder,
+  };
+
+  if (cursor) params.cursor = cursor;
+  if (options?.categoryId && options.categoryId !== 0) {
+    params.categoryId = options.categoryId;
+  }
+  if (options?.search) {
+    params.search = options.search;
   }
 
-  const response = await api.get("v1/favorites", {
-    params,
-  });
-  console.log("FetchFavorites response data:", response.data);
+  const response = await api.get("v1/favorites", { params });
   return response.data;
 }
+

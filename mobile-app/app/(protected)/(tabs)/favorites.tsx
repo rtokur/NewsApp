@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect} from "expo-router";
 import {
   FlatList,
   Text,
@@ -13,19 +13,16 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "@/src/components/ui/SearchBar";
-import { NewsData } from "@/src/types/news";
 import { useCategories } from "@/src/hooks/useCategories";
 import { Category } from "@/src/types/category";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 import CategoryList from "@/src/components/news/CategoryList";
 import Feather from "@expo/vector-icons/Feather";
-import { useFavorites } from "@/src/hooks/useFavorites";
-import PaginationBar from "@/src/components/ui/PaginationBar";
-import { CircleButton } from "@/src/components/ui/CircleButton";
+import { FavoriteItem, useFavorites } from "@/src/hooks/useFavorites";
 
 type SkeletonItem = { _skeleton: true };
-type ListItem = NewsData | SkeletonItem;
+type ListItem = FavoriteItem | SkeletonItem;
 
 const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
   _skeleton: true,
@@ -43,59 +40,89 @@ export default function FavoritesScreen() {
     }),
     [categories.length]
   );
+
   const [selectedCategory, setSelectedCategory] =
     useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
-  const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
   const categoryList = useMemo(
     () => [allCategory, ...categories],
-    [categories]
+    [allCategory, categories]
   );
   const listRef = useRef<FlatList<ListItem>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const isFirstFocus = useRef(true);
+  const isMounted = useRef(false);
 
   const debouncedSearch = useDebounce(searchText, 400);
 
   const effectiveSearch =
     debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined;
 
-  const { data, loading, initialLoading, error, loadMore, hasMore } = useFavorites(10);
+  const { data, loading, initialLoading, error, hasMore, loadMore, refetch } = useFavorites(
+    10, {
+      categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
+      search: effectiveSearch,
+      sortOrder
+    }
+  );
 
   const [showSkeleton, setShowSkeleton] = useState(true);
   const canShowEmpty =
     !showSkeleton && !initialLoading && !loading && (data?.length ?? 0) === 0;
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!isMounted.current) {
+        isMounted.current = true;
+        return;
+      }
+      
+      if (isFirstFocus.current) {
+        isFirstFocus.current = false;
+        return;
+      }
+      
+      refetch();
+    }, [])
+  );
+
   useEffect(() => {
-    setPage(1);
-  }, [sortOrder, selectedCategory.id, debouncedSearch]);
+    isFirstFocus.current = true;
+  }, [sortOrder, selectedCategory.id, effectiveSearch]);
 
   useEffect(() => {
     listRef.current?.scrollToOffset({
       offset: 0,
-      animated: true,
+      animated: false,
     });
     setShowSkeleton(true);
-  }, [page]);
+  }, [sortOrder, selectedCategory.id, effectiveSearch]);
 
   useEffect(() => {
-    if (!loading && !initialLoading) {
+    if (!initialLoading) {
       const timer = setTimeout(() => {
         setShowSkeleton(false);
-      }, 500);
+      }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [loading, initialLoading]);
+  }, [initialLoading]);
 
-  const handleCategorySelect = (category: Category) => {
+  const handleCategorySelect = useCallback((category: Category) => {
     setSelectedCategory(category);
     setSearchText("");
-  };
+  }, []);
 
-  const toggleSortOrder = () => {
+  const toggleSortOrder = useCallback(() => {
     setSortOrder((prev) => (prev === "DESC" ? "ASC" : "DESC"));
-  };
+  }, []);
+
+  const handleEndReached = useCallback(() => {
+    if (!showSkeleton && !loading && hasMore) {
+      loadMore();
+    }
+  }, [showSkeleton, loading, hasMore, loadMore]);
 
   const renderItem = useCallback(
     ({ item }: { item: ListItem }) =>
@@ -103,11 +130,11 @@ export default function FavoritesScreen() {
         <NewsListItemSkeleton />
       ) : (
         <NewsListItem
-          item={item}
+          item={item.news}
           onPress={() =>
             router.push({
               pathname: "/news/[id]",
-              params: { id: item.id },
+              params: { id: item.news.id },
             })
           }
         />
@@ -115,15 +142,11 @@ export default function FavoritesScreen() {
     []
   );
 
-  const ListHeader = useMemo(() => {
+  const FavoritesHeader = useMemo(() => {
     return (
       <>
-          <View style={styles.headerCenter}>
-            <Text style={styles.title} numberOfLines={2}>
-              Favorites
-            </Text>
-          </View>
-
+        <Text style={styles.title}>Favorites</Text>
+        <Text style={styles.subtitle}>Your saved news in one place</Text>
 
         <SearchBar
           value={searchText}
@@ -141,11 +164,31 @@ export default function FavoritesScreen() {
         />
       </>
     );
-  }, [searchText, sortOrder, selectedCategory, categoryList]);
+  }, [searchText, sortOrder, selectedCategory, categoryList, toggleSortOrder, handleCategorySelect]);
+
+  const ListFooter = useMemo(() => {
+    if (loading && !initialLoading && hasMore) {
+      return (
+        <View style={styles.inlineLoader}>
+          <ActivityIndicator size="small" color="#2563EB" />
+        </View>
+      );
+    }
+    return null;
+  }, [loading, initialLoading, hasMore]);
+
+  const handleScroll = useCallback((event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const shouldShow = offsetY > 300;
+    
+    setShowScrollTop((prev) =>
+      prev !== shouldShow ? shouldShow : prev
+    );
+  }, []);
 
   if (loadingCategories) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
       </SafeAreaView>
     );
@@ -153,8 +196,8 @@ export default function FavoritesScreen() {
 
   if (error || errorCategories) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
-        <Text>{error || errorCategories}</Text>
+      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
+        <Text style={styles.errorText}>{error || errorCategories}</Text>
       </SafeAreaView>
     );
   }
@@ -162,7 +205,10 @@ export default function FavoritesScreen() {
   const ListEmpty = () => (
     <View style={styles.emptyContainer}>
       <Feather name="inbox" size={48} color="#C7C7CC" />
-      <Text style={styles.emptyText}>No news found</Text>
+      <Text style={styles.emptyText}>No favorites yet</Text>
+      <Text style={styles.emptySubtext}>
+        Add news to favorites to see them here
+      </Text>
     </View>
   );
 
@@ -172,37 +218,28 @@ export default function FavoritesScreen() {
       onPress={Keyboard.dismiss}
       accessible={false}
     >
-      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <FlatList<ListItem>
           ref={listRef}
           data={showSkeleton ? SKELETON_DATA : data}
           keyExtractor={(item, index) =>
-            "_skeleton" in item ? `skeleton-${index}` : item.id.toString()
+            "_skeleton" in item ? `skeleton-${index}` : `favorite-${item.favoriteId}`
           }
           renderItem={renderItem}
-          ListHeaderComponent={ListHeader}
+          ListHeaderComponent={FavoritesHeader}
           ListEmptyComponent={canShowEmpty ? ListEmpty : null}
-          ListFooterComponent={
-            loading && initialLoading ? (
-              <View style={styles.inlineLoader}>
-                <ActivityIndicator size="small" />
-              </View>
-            ) : null
-          }
-          onEndReached={() => {
-            if (hasMore && !loading) {
-              loadMore();
-            }
-          }}
-          onEndReachedThreshold={0.4}
-          onScroll={(event) => {
-            const offsetY = event.nativeEvent.contentOffset.y;
-            setShowScrollTop(offsetY > 300);
-          }}
+          ListFooterComponent={ListFooter}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.2}
+          onScroll={handleScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={styles.listContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={10}
         />
       </SafeAreaView>
       {showScrollTop && (
@@ -226,43 +263,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    justifyContent: "center",
   },
-  listContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginBottom: 10,
-  },
-
-  headerSide: {
-    width: 44,
-    alignItems: "flex-start",
-  },
-
-  headerCenter: {
+  loadingContainer: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  listContent: {
+    paddingBottom: 20,
   },
   title: {
-    fontSize: 25,
+    fontSize: 35,
     fontWeight: "700",
+    marginTop: 10,
+    marginHorizontal: 20,
     color: "#111111",
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: "300",
+    marginTop: 5,
+    marginHorizontal: 20,
+    color: "#555555",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 50,
+    paddingHorizontal: 40,
   },
   emptyText: {
     marginTop: 12,
     fontSize: 16,
+    fontWeight: "600",
+    color: "#8E8E93",
+  },
+  emptySubtext: {
+    marginTop: 8,
+    fontSize: 14,
     color: "#C7C7CC",
+    textAlign: "center",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+    marginTop: 20,
+    marginHorizontal: 20,
   },
   inlineLoader: {
     paddingVertical: 12,

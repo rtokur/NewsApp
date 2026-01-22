@@ -1,4 +1,4 @@
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useNewsDetail } from "@/src/hooks/useNewsDetail";
 import { NewsDetailHeader } from "@/src/components/news/NewsDetailHeader";

@@ -15,7 +15,7 @@ export default function ProtectedLayout() {
   }
 
   return (
-    <Stack>
+      <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="news/[id]" options={{ headerShown: false }} />
       <Stack.Screen

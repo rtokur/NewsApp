@@ -25,8 +25,9 @@ interface Props {
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export function NewsDetailHeader({ news }: Props) {
-  const { toggleFavorite, isFavorite} = useContext(FavoriteContext)
-  const saved = isFavorite(news.id)
+  const { toggleFavorite, isFavorite, initialized} = useContext(FavoriteContext)
+  
+  const saved = initialized && isFavorite(news.id);
   return (
     <>
       <ImageBackground source={{ uri: news.imageUrl }} style={styles.bg}>
@@ -54,7 +55,10 @@ export function NewsDetailHeader({ news }: Props) {
         </Pressable>
 
         <View style={{ flexDirection: "row", gap: 12 }}>
-          <Pressable onPress={() => toggleFavorite(news.id)}>
+          <Pressable 
+          disabled={!initialized} 
+          onPress={() => toggleFavorite(news.id)
+          }>
           <BlurView intensity={25} tint="dark" style={styles.icon}>
             <FontAwesome name={saved ? "bookmark" : "bookmark-o"} size={22} color="#fff" />
           </BlurView>
