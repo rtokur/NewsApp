@@ -1,4 +1,4 @@
-import { useFocusEffect} from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   FlatList,
   Text,
@@ -20,6 +20,8 @@ import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 import CategoryList from "@/src/components/news/CategoryList";
 import Feather from "@expo/vector-icons/Feather";
 import { FavoriteItem, useFavorites } from "@/src/hooks/useFavorites";
+import ErrorState from "@/src/components/ui/ErrorState";
+import { getErrorType } from "@/src/utils/errorUtils";
 
 type SkeletonItem = { _skeleton: true };
 type ListItem = FavoriteItem | SkeletonItem;
@@ -31,7 +33,7 @@ const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
 const MIN_SEARCH_LENGTH = 3;
 
 export default function FavoritesScreen() {
-  const { categories, loadingCategories, errorCategories } = useCategories();
+  const { categories, loadingCategories, errorCategories, refetchCategories } = useCategories();
   const allCategory = useMemo(
     () => ({
       id: 0,
@@ -71,26 +73,32 @@ export default function FavoritesScreen() {
   const canShowEmpty =
     !showSkeleton && !initialLoading && !loading && (data?.length ?? 0) === 0;
 
+  // Only refetch when returning to screen (not on first mount or filter changes)
   useFocusEffect(
     useCallback(() => {
+      // Skip on first mount
       if (!isMounted.current) {
         isMounted.current = true;
         return;
       }
       
+      // Skip if filters just changed
       if (isFirstFocus.current) {
         isFirstFocus.current = false;
         return;
       }
       
+      // Refetch without showing skeleton for background updates
       refetch();
     }, [])
   );
 
+  // Reset first focus flag when filters change
   useEffect(() => {
     isFirstFocus.current = true;
   }, [sortOrder, selectedCategory.id, effectiveSearch]);
 
+  // Scroll to top and show skeleton when filters change
   useEffect(() => {
     listRef.current?.scrollToOffset({
       offset: 0,
@@ -99,6 +107,7 @@ export default function FavoritesScreen() {
     setShowSkeleton(true);
   }, [sortOrder, selectedCategory.id, effectiveSearch]);
 
+  // Hide skeleton after initial load
   useEffect(() => {
     if (!initialLoading) {
       const timer = setTimeout(() => {
@@ -186,19 +195,32 @@ export default function FavoritesScreen() {
     );
   }, []);
 
+  const handleRetry = () => {
+    if (errorCategories) {
+      refetchCategories?.();
+    } else if (error) {
+      refetch?.();
+    }
+  };
+
   if (loadingCategories) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#2563EB" />
       </SafeAreaView>
     );
   }
 
   if (error || errorCategories) {
+    const errorMessage = (error || errorCategories) || undefined;
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text style={styles.errorText}>{error || errorCategories}</Text>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <ErrorState
+          message={errorMessage}
+          type={getErrorType(errorMessage)}
+          onRetry={handleRetry}
+        />
+      </View>
     );
   }
 
@@ -305,13 +327,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#C7C7CC",
     textAlign: "center",
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#EF4444",
-    textAlign: "center",
-    marginTop: 20,
-    marginHorizontal: 20,
   },
   inlineLoader: {
     paddingVertical: 12,

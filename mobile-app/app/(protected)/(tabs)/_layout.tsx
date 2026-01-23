@@ -23,7 +23,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           height: 75,
           paddingVertical: 12,
-          paddingHorizontal: 12, // ✅ sadece sağ ve sol dış boşluk
+          paddingHorizontal: 12, 
         },        
         tabBarItemStyle: {
           height: 43,

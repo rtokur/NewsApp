@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { fetchNewsByType } from "../services/newsService";
 import { NewsData, HighlightResponse } from "../types/news";
 
@@ -7,23 +7,26 @@ export function useHighlightNews(type: "breaking-highlight" | "recommendations-h
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const loadData = async () => {
+    const loadHighlightNews = useCallback(async () => {
       try {
         setLoading(true);
         const result = await fetchNewsByType<HighlightResponse>({ type });
-        if (isMounted) setData(result.data);
+        setData(result.data);
+        setError(null);
       } catch (err) {
-        if (isMounted) setError("News could not be loaded");
+        setError("Failed to load news");
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
-    };
+    }, [type]);
 
-    loadData();
-    return () => { isMounted = false; };
-  }, [type]);
-
-  return { data, loading, error };
+    useEffect(() => {
+      loadHighlightNews();
+    }, [loadHighlightNews]);
+  
+    const refetch = useCallback(() => {
+      loadHighlightNews();
+    }, [loadHighlightNews]);
+  
+    return { data, loading, error, refetch };
 }

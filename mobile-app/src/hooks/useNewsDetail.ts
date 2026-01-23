@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { NewsDetail} from "../types/newsDetail";
 import { fetchNewsDetail } from "../services/newsService";
 
@@ -7,32 +7,33 @@ export function useNewsDetail(id: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadDetail = async () => {
-      try {
-        const data = await fetchNewsDetail(id);
-        if (isMounted) {
-          setNews(data);
-        }
-      } catch (e) {
-        if (isMounted) {
-          setError("Failed to load news detail");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+    const loadDetail = useCallback(async () => {
+      if(!id) {
+        setError("Invalid news ID");
+        setLoading(false);
+        return;
       }
-    };
 
-    loadDetail();
+      try {
+        setLoading(true);
+        const data = await fetchNewsDetail(id);
+        setNews(data);
+        setError(null);
+      } catch (e) {
+          setError("Failed to load news detail");
+          setNews(null);
+      } finally {
+          setLoading(false);
+      }
+    }, [id]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [id]);
+    useEffect(() => {
+      loadDetail();
+    }, [loadDetail]);
 
-    return { news, loading, error };
+    const refetch = useCallback(() => {
+      loadDetail();
+    }, [loadDetail]);
+
+    return { news, loading, error, refetch };
 }

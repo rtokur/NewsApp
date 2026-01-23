@@ -12,10 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import PaginationBar from "@/src/components/ui/PaginationBar";
-
 import CategoryList from "@/src/components/news/CategoryList";
 import NewsListItem from "@/src/components/news/NewsListItem";
 import SearchBar from "@/src/components/ui/SearchBar";
+import ErrorState from "@/src/components/ui/ErrorState";
 
 import { useNews } from "@/src/hooks/useNews";
 import { useCategories } from "@/src/hooks/useCategories";
@@ -23,6 +23,7 @@ import { Category } from "@/src/types/category";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 import { NewsData } from "@/src/types/news";
+import { getErrorType } from "@/src/utils/errorUtils";
 
 type SkeletonItem = { _skeleton: true };
 type ListItem = NewsData | SkeletonItem;
@@ -34,7 +35,7 @@ const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
 const MIN_SEARCH_LENGTH = 3;
 
 export default function DiscoverScreen() {
-  const { categories, loadingCategories, errorCategories } = useCategories();
+  const { categories, loadingCategories, errorCategories, refetchCategories } = useCategories();
   const allCategory = useMemo(
     () => ({
       id: 0,
@@ -44,15 +45,11 @@ export default function DiscoverScreen() {
     [categories.length]
   );
 
-  const [selectedCategory, setSelectedCategory] =
-    useState<Category>(allCategory);
+  const [selectedCategory, setSelectedCategory] = useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
   const [page, setPage] = useState(1);
-  const categoryList = useMemo(
-    () => [allCategory, ...categories],
-    [categories]
-  );
+  const categoryList = useMemo(() => [allCategory, ...categories], [categories]);
   const listRef = useRef<FlatList<ListItem>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -61,7 +58,7 @@ export default function DiscoverScreen() {
   const effectiveSearch =
     debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined;
 
-  const { data, loading, initialLoading, error, totalPages } = useNews({
+  const { data, loading, initialLoading, error, totalPages, refetch } = useNews({
     page,
     categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
     search: effectiveSearch,
@@ -101,6 +98,14 @@ export default function DiscoverScreen() {
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "DESC" ? "ASC" : "DESC"));
+  };
+
+  const handleRetry = () => {
+    if (errorCategories) {
+      refetchCategories?.();
+    } else if (error) {
+      refetch?.();
+    }
   };
 
   const renderItem = useCallback(
@@ -147,17 +152,22 @@ export default function DiscoverScreen() {
 
   if (loadingCategories) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563EB" />
       </SafeAreaView>
     );
   }
 
   if (error || errorCategories) {
+    const errorMessage = error || errorCategories || undefined;
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text>{error || errorCategories}</Text>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <ErrorState
+          message={errorMessage}
+          type={getErrorType(errorMessage)}
+          onRetry={handleRetry}
+        />
+      </View>
     );
   }
 
@@ -229,6 +239,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
   listContent: {
     flexGrow: 1,
     paddingBottom: 20,
@@ -257,10 +273,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: "#C7C7CC",
-  },
-  inlineLoader: {
-    paddingVertical: 12,
-    alignItems: "center",
   },
   scrollTopButton: {
     position: "absolute",

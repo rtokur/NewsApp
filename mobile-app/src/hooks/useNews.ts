@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchNewsByType, FetchNewsParams } from "../services/newsService";
 import { NewsData, PaginatedResponse } from "../types/news";
 
@@ -16,42 +16,36 @@ export function useNews({
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
 
+  const loadNews = useCallback(async () => {
+    try {
+      page === 1 ? setInitialLoading(true) : setLoading(true);
+      const result = await fetchNewsByType<PaginatedResponse<NewsData>>({
+        page,
+        limit,
+        type,
+        categoryId: categoryId || undefined,
+        search: search?.trim() || undefined,
+        sortOrder,
+      });
+
+      setData(result.data);
+      setTotalPages(result.meta.totalPages ?? 1);
+      setError(null);
+    } catch {
+      setError("Failed to load news");
+    } finally {
+      setLoading(false);
+      setInitialLoading(false);
+    }
+  }, [page, type, categoryId, search, sortOrder, limit]);
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadNews = async () => {
-      try {
-        page === 1 ? setInitialLoading(true) : setLoading(true);
-    
-        const result = await fetchNewsByType<PaginatedResponse<NewsData>>({
-          page,
-          limit,
-          type,
-          categoryId: categoryId || undefined,
-          search: search?.trim() || undefined, 
-          sortOrder,
-        });
-
-        if (!isMounted) return;
-
-        setData(result.data);
-        setTotalPages(result.meta.totalPages ?? 1);
-        setError(null);
-      } catch {
-        if (isMounted) setError("Failed to load news");
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-          setInitialLoading(false);
-        }
-      }
-    };
-
     loadNews();
-    return () => {
-      isMounted = false;
-    };
-  }, [page, type, categoryId, search, sortOrder]);
+  }, [loadNews]);
 
-  return { data, loading, initialLoading, error, totalPages };
+  const refetch = useCallback(() => {
+    loadNews();
+  }, [loadNews]);
+
+  return { data, loading, initialLoading, error, totalPages, refetch };
 }

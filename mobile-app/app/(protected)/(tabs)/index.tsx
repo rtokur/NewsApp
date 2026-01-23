@@ -1,35 +1,58 @@
-import { router } from "expo-router";
-import { ActivityIndicator, FlatList, StyleSheet, Text } from "react-native";
+import { router, useNavigation } from "expo-router";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BreakingNewsCarousel } from "@/src/components/news/BreakingNewsCarousel";
 import NewsListItem from "@/src/components/news/NewsListItem";
 import SectionHeader from "@/src/components/ui/SectionHeader";
+import ErrorState from "@/src/components/ui/ErrorState";
+import { getErrorType } from "@/src/utils/errorUtils";
 import { useHighlightNews } from "@/src/hooks/useHighlightNews";
 import BreakingNewsSkeleton from "@/src/components/news/BreakingNewsSkeleton";
 import NewsCarouselCardSkeletonItem from "@/src/components/news/NewsSkeletonItem";
 import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
+import { useEffect } from "react";
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+  
   const {
     data: breakingNewsHighlight,
     loading: breakingLoading,
     error: breakingError,
+    refetch: refetchBreaking,
   } = useHighlightNews("breaking-highlight");
+  
   const {
     data: recommendedNewsHighlight,
     loading: recommendedLoading,
     error: recommendedError,
+    refetch: refetchRecommended,
   } = useHighlightNews("recommendations-highlight");
 
   const isLoading = recommendedLoading || breakingLoading;
+  const hasError = recommendedError || breakingError;
 
-  if (recommendedError || breakingError) {
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: !hasError,
+    });
+  }, [hasError, navigation]);
+
+  const handleRetry = () => {
+    if (breakingError) refetchBreaking?.();
+    if (recommendedError) refetchRecommended?.();
+  };
+
+  if (hasError) {
+    const errorMessage = (recommendedError || breakingError) || undefined;
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "top"]}>
-        <Text style={styles.errorText}>
-          {recommendedError || breakingError}
-        </Text>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <ErrorState
+          message={errorMessage}
+          type={getErrorType(errorMessage)}
+          onRetry={handleRetry}
+        />
+      </View>
     );
   }
 
@@ -84,6 +107,7 @@ export default function HomeScreen() {
               }
             />
           )}
+          contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <>
               <SectionHeader
@@ -129,14 +153,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    justifyContent: "center",
   },
-  errorText: {
-    color: "red",
-    fontSize: 18,
-    textAlign: "center",
-    justifyContent: "center",
-    marginTop: 20,
+  listContent: {
+    paddingBottom: 20,
   },
   emptyText: {
     fontSize: 16,
