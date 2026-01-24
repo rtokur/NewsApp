@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,10 +8,12 @@ import { Favorite } from './entities/favorites.entity';
 import { News } from 'src/news/entities/news.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { JwtPayload } from 'src/auth/jwt-payload.interface';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class FavoritesService {
+  private readonly cacheTTL = 60 * 1000;
+
   constructor(
     @InjectRepository(Favorite)
     private readonly favoriteRepository: Repository<Favorite>,
@@ -22,6 +23,8 @@ export class FavoritesService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly redisService: RedisService,
   ) {}
 
   async addFavorite(userId: number, newsId: number) {
@@ -57,7 +60,10 @@ export class FavoritesService {
       news,
     });
 
-    return this.favoriteRepository.save(favorite);
+    const result = await this.favoriteRepository.save(favorite);
+
+    await this.redisService.delByPattern(`favorites:user:${userId}:*`);
+    return result;
   }
 
   async removeFavorite(userId: number, newsId: number) {
@@ -73,6 +79,7 @@ export class FavoritesService {
     }
 
     await this.favoriteRepository.remove(favorite);
+    await this.redisService.delByPattern(`favorites:user:${userId}:*`);
 
     return { success: true };
   }
@@ -85,6 +92,15 @@ export class FavoritesService {
     sort: 'ASC' | 'DESC' = 'DESC',
     search?: string,
   ) {
+    const cacheKey = `favorites:user:${userId}:limit:${limit}:cursor:${cursor || 'null'}:category:${categoryId || 'null'}:sort:${sort}:search:${search || 'null'}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return JSON.parse(cached);
+    }
+
+    console.log('FROM POSTGRES');
+
     const qb = this.favoriteRepository
       .createQueryBuilder('favorite')
       .leftJoin('favorite.user', 'user')
@@ -123,7 +139,14 @@ export class FavoritesService {
 
     const hasNextPage = favorites.length > limit;
     const items = hasNextPage ? favorites.slice(0, limit) : favorites;
-
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify({
+        items,
+        nextCursor: hasNextPage ? items[items.length - 1].createdAt : null,
+      }),
+      this.cacheTTL,
+    );
     return {
       items,
       nextCursor: hasNextPage ? items[items.length - 1].createdAt : null,

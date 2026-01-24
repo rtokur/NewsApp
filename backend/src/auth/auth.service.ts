@@ -8,7 +8,6 @@ import { LoginDto } from './dto/login.dto';
 import { User } from 'src/users/entities/user.entity';
 import { RedisService } from 'src/redis/redis.service';
 import * as crypto from 'crypto';
-import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {

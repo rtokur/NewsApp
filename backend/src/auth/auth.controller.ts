@@ -4,7 +4,6 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { Request } from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtPayload } from './jwt-payload.interface';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';

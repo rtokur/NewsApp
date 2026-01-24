@@ -73,32 +73,26 @@ export default function FavoritesScreen() {
   const canShowEmpty =
     !showSkeleton && !initialLoading && !loading && (data?.length ?? 0) === 0;
 
-  // Only refetch when returning to screen (not on first mount or filter changes)
   useFocusEffect(
     useCallback(() => {
-      // Skip on first mount
       if (!isMounted.current) {
         isMounted.current = true;
         return;
       }
       
-      // Skip if filters just changed
       if (isFirstFocus.current) {
         isFirstFocus.current = false;
         return;
       }
       
-      // Refetch without showing skeleton for background updates
       refetch();
     }, [])
   );
 
-  // Reset first focus flag when filters change
   useEffect(() => {
     isFirstFocus.current = true;
   }, [sortOrder, selectedCategory.id, effectiveSearch]);
 
-  // Scroll to top and show skeleton when filters change
   useEffect(() => {
     listRef.current?.scrollToOffset({
       offset: 0,

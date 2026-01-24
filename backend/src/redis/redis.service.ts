@@ -2,7 +2,10 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
 
 @Injectable()
-export class RedisService implements OnModuleInit {
+export class RedisService implements OnModuleInit, OnModuleDestroy {
+  onModuleDestroy() {
+    this.redisClient.quit();
+  }
   private redisClient: Redis;
 
   onModuleInit() {
@@ -38,4 +41,21 @@ export class RedisService implements OnModuleInit {
     }
     return value;
   }
+
+  async delByPattern(pattern: string) {
+    const stream = this.redisClient.scanStream({
+      match: pattern,
+      count: 100,
+    });
+  
+    const pipeline = this.redisClient.pipeline();
+  
+    for await (const keys of stream) {
+      if (keys.length) {
+        keys.forEach((key: string) => pipeline.del(key));
+      }
+    }
+  
+    await pipeline.exec();
+  }  
 }

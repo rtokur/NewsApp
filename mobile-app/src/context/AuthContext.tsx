@@ -1,10 +1,13 @@
 import { router } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
-import { loginRequest, registerRequest, forgotPasswordRequest } from "../services/authService";
+import { loginRequest, meRequest, registerRequest } from "../services/authService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setAccesssToken, getAccessToken, removeAccessToken, clearTokens, setRefreshToken } from "../utils/storage";
+import { setAccesssToken, getAccessToken, clearTokens, setRefreshToken } from "../utils/storage";
+import { User } from "../types/user";
+import { getItem } from "expo-secure-store";
 
 type AuthContextType = {
+  user: User | null;
   isLoggedIn: boolean;
   loading: boolean;
   initialized: boolean;
@@ -15,6 +18,7 @@ type AuthContextType = {
 };
 
 export const AuthContext = createContext<AuthContextType>({
+  user: null,
   isLoggedIn: false,
   loading: false,
   initialized: false,
@@ -28,6 +32,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,15 +43,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (shouldRemember !== "true") {
           await clearTokens();
           setIsLoggedIn(false);
+          setUser(null);
           return;
         } 
         if (token) {
+          const me = await meRequest();
+          setUser(me);
           setIsLoggedIn(true);
           router.replace("/");
         }
       } catch (error) {
         console.error("Auth check failed", error);
         setIsLoggedIn(false);
+        setUser(null);
       } finally {
         setInitialized(true);
       }
@@ -72,7 +81,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await setAccesssToken(response.accessToken);
       await setRefreshToken(response.refreshToken);      
       await AsyncStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-      
+      const me = await meRequest();
+      setUser(me);
       setIsLoggedIn(true);
       router.replace("/");
     } catch (error) {
@@ -126,11 +136,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await clearTokens();
     await AsyncStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
+    setUser(null);
     router.replace("/login")
   }
 
   return (
-    <AuthContext.Provider value={{isLoggedIn, loading, initialized, logIn, register, forgotPassword,logOut}}>
+    <AuthContext.Provider value={{user, isLoggedIn, loading, initialized, logIn, register, forgotPassword,logOut}}>
       {children}
     </AuthContext.Provider>
   )
