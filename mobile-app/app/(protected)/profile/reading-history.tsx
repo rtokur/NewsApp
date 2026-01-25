@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import {
   FlatList,
   Text,
@@ -7,6 +7,7 @@ import {
   View,
   Pressable,
   Keyboard,
+  Alert,
 } from "react-native";
 import NewsListItem from "@/src/components/news/NewsListItem";
 import { router } from "expo-router";
@@ -19,13 +20,15 @@ import { useDebounce } from "@/src/hooks/useDebounce";
 import NewsListItemSkeleton from "@/src/components/news/NewsListItemSkeleton";
 import CategoryList from "@/src/components/news/CategoryList";
 import Feather from "@expo/vector-icons/Feather";
-import { FavoriteItem, useFavorites } from "@/src/hooks/useFavorites";
 import ErrorState from "@/src/components/ui/ErrorState";
 import { getErrorType } from "@/src/utils/errorUtils";
+import { ReadingHistoryItem, useReadingHistory } from "@/src/hooks/useReadingHistory";
+import { CircleButton } from "@/src/components/ui/CircleButton";
+import Swipeable from "react-native-gesture-handler/lib/typescript/components/ReanimatedSwipeable";
 import SwipeToDelete from "@/src/components/ui/SwipeToDelete";
 
 type SkeletonItem = { _skeleton: true };
-type ListItem = FavoriteItem | SkeletonItem;
+type ListItem = ReadingHistoryItem | SkeletonItem;
 
 const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
   _skeleton: true,
@@ -33,7 +36,7 @@ const SKELETON_DATA: SkeletonItem[] = Array.from({ length: 6 }, () => ({
 
 const MIN_SEARCH_LENGTH = 3;
 
-export default function FavoritesScreen() {
+export default function ReadingHistoryScreen() {
   const { categories, loadingCategories, errorCategories, refetchCategories } = useCategories();
   const allCategory = useMemo(
     () => ({
@@ -47,7 +50,6 @@ export default function FavoritesScreen() {
   const [selectedCategory, setSelectedCategory] =
     useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
-  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
   const categoryList = useMemo(
     () => [allCategory, ...categories],
     [allCategory, categories]
@@ -62,11 +64,10 @@ export default function FavoritesScreen() {
   const effectiveSearch =
     debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : undefined;
 
-  const { data, loading, initialLoading, error, hasMore, loadMore, refetch, remove } = useFavorites(
+  const { data, loading, initialLoading, error, hasMore, loadMore, refetch, remove } = useReadingHistory(
     10, {
       categoryId: selectedCategory.id === 0 ? undefined : selectedCategory.id,
       search: effectiveSearch,
-      sortOrder
     }
   );
 
@@ -92,7 +93,7 @@ export default function FavoritesScreen() {
 
   useEffect(() => {
     isFirstFocus.current = true;
-  }, [sortOrder, selectedCategory.id, effectiveSearch]);
+  }, [selectedCategory.id, effectiveSearch]);
 
   useEffect(() => {
     listRef.current?.scrollToOffset({
@@ -100,7 +101,7 @@ export default function FavoritesScreen() {
       animated: false,
     });
     setShowSkeleton(true);
-  }, [sortOrder, selectedCategory.id, effectiveSearch]);
+  }, [selectedCategory.id, effectiveSearch]);
 
   useEffect(() => {
     if (!initialLoading) {
@@ -117,10 +118,6 @@ export default function FavoritesScreen() {
     setSearchText("");
   }, []);
 
-  const toggleSortOrder = useCallback(() => {
-    setSortOrder((prev) => (prev === "DESC" ? "ASC" : "DESC"));
-  }, []);
-
   const handleEndReached = useCallback(() => {
     if (!showSkeleton && !loading && hasMore) {
       loadMore();
@@ -133,15 +130,9 @@ export default function FavoritesScreen() {
         <NewsListItemSkeleton />
       ) : (
         <SwipeToDelete
-          onDelete={async () => {
-            try {
-              await remove(item.favoriteId);
-            } catch (e) {
-              throw new Error("DELETE_FAILED");
-            }
-          }}
+        onDelete={() => handleDelete(item.news.id)}
         >
-           <NewsListItem
+        <NewsListItem
           item={item.news}
           onPress={() =>
             router.push({
@@ -151,25 +142,30 @@ export default function FavoritesScreen() {
           }
         />
         </SwipeToDelete>
-       
       ),
-    [remove]
+    []
   );
 
-  const FavoritesHeader = useMemo(() => {
+  const ReadingHistoryHeader = useMemo(() => {
     return (
       <>
-        <Text style={styles.title}>Favorites</Text>
-        <Text style={styles.subtitle}>Your saved news in one place</Text>
+       <View style={styles.headerSide}>
+            <CircleButton
+              icon="arrow-back-ios-new"
+              iconType="material"
+              onPress={() => router.back()}
+            />
+          </View>
+          
+        <Text style={styles.title}>Reading History</Text>
+        <Text style={styles.subtitle}>Articles you've read recently</Text>
 
         <SearchBar
           value={searchText}
           onChangeText={setSearchText}
           onClear={() => setSearchText("")}
           placeholder="Search"
-          showSort={true}
-          sortOrder={sortOrder}
-          onToggleSort={toggleSortOrder}
+          showSort={false}
         />
 
         <CategoryList
@@ -179,7 +175,7 @@ export default function FavoritesScreen() {
         />
       </>
     );
-  }, [searchText, sortOrder, selectedCategory, categoryList, toggleSortOrder, handleCategorySelect]);
+  }, [searchText, selectedCategory, categoryList, handleCategorySelect]);
 
   const ListFooter = useMemo(() => {
     if (loading && !initialLoading && hasMore) {
@@ -200,6 +196,17 @@ export default function FavoritesScreen() {
       prev !== shouldShow ? shouldShow : prev
     );
   }, []);
+
+  const handleDelete = useCallback(async (newsId: number) => {
+    try {
+      await remove(newsId);
+    } catch {
+      Alert.alert(
+        "Error",
+        "Failed to delete the reading history item."
+      );
+    }
+  }, [remove]);  
 
   const handleRetry = () => {
     if (errorCategories) {
@@ -251,10 +258,10 @@ export default function FavoritesScreen() {
           ref={listRef}
           data={showSkeleton ? SKELETON_DATA : data}
           keyExtractor={(item, index) =>
-            "_skeleton" in item ? `skeleton-${index}` : `favorite-${item.favoriteId}`
+            "_skeleton" in item ? `skeleton-${index}` : `reading-${item.id}`
           }
           renderItem={renderItem}
-          ListHeaderComponent={FavoritesHeader}
+          ListHeaderComponent={ReadingHistoryHeader}
           ListEmptyComponent={canShowEmpty ? ListEmpty : null}
           ListFooterComponent={ListFooter}
           onEndReached={handleEndReached}
@@ -291,6 +298,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  headerSide: {
+    width: 44,
+    alignItems: "flex-start",
+    marginLeft: 20,
   },
   loadingContainer: {
     flex: 1,

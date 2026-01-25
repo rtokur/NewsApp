@@ -137,6 +137,7 @@ export default function DiscoverScreen() {
           onChangeText={setSearchText}
           onClear={() => setSearchText("")}
           placeholder="Search"
+          showSort={true}
           sortOrder={sortOrder}
           onToggleSort={toggleSortOrder}
         />

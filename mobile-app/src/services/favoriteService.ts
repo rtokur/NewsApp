@@ -36,3 +36,6 @@ export async function fetchFavorites(
   return response.data;
 }
 
+export async function removeFavorite(favoriteId: number): Promise<void> {
+  await api.delete(`v1/favorites/${favoriteId}`);
+}

@@ -8,8 +8,10 @@ interface Props {
   onChangeText: (text: string) => void;
   onClear: () => void;
   placeholder: string;
-  sortOrder: "ASC" | "DESC";
-  onToggleSort: () => void;
+  
+  showSort: boolean;
+  sortOrder?: "ASC" | "DESC";
+  onToggleSort?: () => void;
 }
 
 export default function SearchBar({
@@ -17,12 +19,14 @@ export default function SearchBar({
   onChangeText,
   onClear,
   placeholder,
-  sortOrder,
+  showSort = false,
+  sortOrder = "DESC",
   onToggleSort,
 }: Props) {
   return (
     <View style={styles.container}>
       <Feather name="search" size={22} color="#8E8E93" />
+
       <TextInput
         style={styles.input}
         placeholder={placeholder}
@@ -30,11 +34,12 @@ export default function SearchBar({
         value={value}
         onChangeText={onChangeText}
       />
+
       {value ? (
         <Pressable onPress={onClear}>
           <Ionicons name="close-circle" size={20} color="#8E8E93" />
         </Pressable>
-      ) : (
+      ) : showSort && onToggleSort ? (
         <Pressable onPress={onToggleSort}>
           <FontAwesome
             name={
@@ -46,10 +51,11 @@ export default function SearchBar({
             color="#8E8E93"
           />
         </Pressable>
-      )}
+      ) : null}
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

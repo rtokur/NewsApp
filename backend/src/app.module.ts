@@ -11,6 +11,9 @@ import { RedisService } from './redis/redis.service';
 import { RedisModule } from './redis/redis.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { UsersModule } from './users/users.module';
+import { ReadingHistoryService } from './reading-history/reading-history.service';
+import { ReadingHistoryController } from './reading-history/reading-history.controller';
+import { ReadingHistoryModule } from './reading-history/reading-history.module';
 import Keyv from 'keyv';
 import KeyvRedis from '@keyv/redis';
 
@@ -47,7 +50,7 @@ import KeyvRedis from '@keyv/redis';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: false,
+      synchronize: true,
     }),
     RedisModule,
     CategoriesModule,
@@ -56,8 +59,9 @@ import KeyvRedis from '@keyv/redis';
     RedisModule,
     FavoritesModule,
     UsersModule,
+    ReadingHistoryModule,
   ],
   controllers: [AppController],
-  providers: [AppService, RedisService],
+  providers: [AppService],
 })
 export class AppModule {}

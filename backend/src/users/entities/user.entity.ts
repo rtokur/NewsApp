@@ -1,13 +1,14 @@
 import { Favorite } from "src/favorites/entities/favorites.entity";
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
 import { Exclude } from "class-transformer";
+import { ReadingHistory } from "src/reading-history/entities/reading-history.entity";
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true})
   email: string;
 
   @Column()
@@ -25,4 +26,10 @@ export class User {
 
   @OneToMany(() => Favorite, (favorite) => favorite.user)
   favorites: Favorite[];
+
+  @OneToMany(
+    () => ReadingHistory,
+    (history) => history.user,
+  )
+  readingHistory: ReadingHistory[];
 }

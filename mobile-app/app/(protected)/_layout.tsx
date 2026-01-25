@@ -24,6 +24,7 @@ export default function ProtectedLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="profile/reading-history" options={{ headerShown: false }} />
     </Stack>
   );
 }

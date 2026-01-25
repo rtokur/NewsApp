@@ -171,6 +171,7 @@ export class NewsService {
     if (!news) {
       throw new NotFoundException('News not found');
     }
+    
     const response: NewsDetailResponseDto = {
       id: news.id,
       title: news.title,

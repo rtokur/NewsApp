@@ -8,10 +8,19 @@ import { NewsDetailHeaderSkeleton } from "@/src/components/news/NewsDetailHeader
 import { NewsDetailCardSkeleton } from "@/src/components/news/NewsDetailCardSkeleton";
 import ErrorState from "@/src/components/ui/ErrorState";
 import { getErrorType } from "@/src/utils/errorUtils";
+import { useEffect} from "react";
+import { useMarkNewsAsRead } from "@/src/hooks/useMarkAsRead";
 
 export default function NewsDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { news, loading, error, refetch } = useNewsDetail(Number(id));
+  const newsId = Number(id);
+  const { news, loading, error, refetch } = useNewsDetail(newsId);
+  const { markAsRead } = useMarkNewsAsRead();
+
+  useEffect(() => {
+    if (!newsId) return;
+    markAsRead(newsId);
+  }, [newsId, markAsRead]);
 
   if (loading) {
     return (
@@ -20,12 +29,13 @@ export default function NewsDetailScreen() {
         <NewsDetailCardSkeleton />
       </View>
     );
-  }
+  } 
+
   if (error || !news) {
     const errorMessage = error || "News not found";
     return (
-      <SafeAreaView 
-        style={{ flex: 1, backgroundColor: "#FFFFFF" }} 
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: "#FFFFFF" }}
         edges={["top", "left", "right"]}
       >
         <ErrorState
@@ -36,6 +46,7 @@ export default function NewsDetailScreen() {
       </SafeAreaView>
     );
   }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <NewsDetailHeader news={news} />

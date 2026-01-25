@@ -35,7 +35,7 @@ const MIN_SEARCH_LENGTH = 3;
 
 export default function NewsListScreen() {
   const { type, title } = useLocalSearchParams<{
-    type?: "breaking" | "recommendations";
+    type?: "breaking" | "recommendations" | "reading-history";
     title?: string;
   }>();
   const { categories, loadingCategories, errorCategories } = useCategories();
@@ -47,6 +47,7 @@ export default function NewsListScreen() {
     }),
     [categories.length]
   );
+
   const [selectedCategory, setSelectedCategory] =
     useState<Category>(allCategory);
   const [searchText, setSearchText] = useState("");
@@ -128,8 +129,6 @@ export default function NewsListScreen() {
   const ListHeader = useMemo(() => {
     return (
       <>
-        <View style={styles.headerRow}>
-          {/* Sol */}
           <View style={styles.headerSide}>
             <CircleButton
               icon="arrow-back-ios-new"
@@ -138,22 +137,16 @@ export default function NewsListScreen() {
             />
           </View>
 
-          {/* Orta */}
-          <View style={styles.headerCenter}>
-            <Text style={styles.title} numberOfLines={1}>
+
+            <Text style={styles.title} numberOfLines={2}>
               {title}
             </Text>
-          </View>
-
-          {/* Sağ (denge için boş) */}
-          <View style={styles.headerSide} />
-        </View>
-
         <SearchBar
           value={searchText}
           onChangeText={setSearchText}
           onClear={() => setSearchText("")}
           placeholder="Search"
+          showSort={true}
           sortOrder={sortOrder}
           onToggleSort={toggleSortOrder}
         />
@@ -256,16 +249,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginBottom: 10,
-  },
 
   headerSide: {
     width: 44,
     alignItems: "flex-start",
+    marginLeft: 20,
   },
 
   headerCenter: {
@@ -273,8 +261,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 25,
+    fontSize: 35,
     fontWeight: "700",
+    marginTop: 10,
+    marginHorizontal: 20,
     color: "#111111",
   },
   emptyContainer: {

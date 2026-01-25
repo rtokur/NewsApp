@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NewsData } from "../types/news";
-import { fetchFavorites } from "../services/favoriteService";
+import { fetchFavorites, removeFavorite } from "../services/favoriteService";
 
 export interface FavoriteItem {
   favoriteId: number;
@@ -96,6 +96,15 @@ export function useFavorites(
     );
   }, []);
 
+  const remove = useCallback(async (favoriteId: number) => {
+    try {
+      await removeFavorite(favoriteId);
+      removeLocalItem(favoriteId);
+    } catch (err: any) {
+      throw new Error(err.message ?? "Failed to remove favorite");
+    }
+  }, [removeLocalItem]);
+
   return {
     data,
     loading,
@@ -105,5 +114,6 @@ export function useFavorites(
     loadMore,
     refetch,
     removeLocalItem,
+    remove,
   };
 }
