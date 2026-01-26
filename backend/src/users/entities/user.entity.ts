@@ -18,6 +18,9 @@ export class User {
   @Column({ name: 'full_name', nullable: true })
   fullName: string;
 
+  @Column({ nullable: true })
+  profileImageUrl: string;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

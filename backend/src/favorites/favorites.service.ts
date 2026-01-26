@@ -66,11 +66,11 @@ export class FavoritesService {
     return result;
   }
 
-  async removeFavorite(userId: number, newsId: number) {
+  async removeFavorite(userId: number, favoriteId: number) {
     const favorite = await this.favoriteRepository.findOne({
       where: {
         user: { id: userId },
-        news: { id: newsId },
+        id: favoriteId,
       },
     });
 
@@ -139,17 +139,16 @@ export class FavoritesService {
 
     const hasNextPage = favorites.length > limit;
     const items = hasNextPage ? favorites.slice(0, limit) : favorites;
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify({
-        items,
-        nextCursor: hasNextPage ? items[items.length - 1].createdAt : null,
-      }),
-      this.cacheTTL,
-    );
-    return {
+    const result = {
       items,
       nextCursor: hasNextPage ? items[items.length - 1].createdAt : null,
-    };
+    }
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(result),
+      this.cacheTTL,
+    );
+    
+    return result;
   }
 }

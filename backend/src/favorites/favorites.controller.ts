@@ -32,13 +32,13 @@ export class FavoritesController {
     return this.favoritesService.addFavorite(user.sub, newsId);
   }
 
-  @Delete(':newsId')
+  @Delete(':favoriteId')
   @ApiOperation({ summary: 'Remove news from favorites' })
   removeFavorite(
     @CurrentUser() user: JwtPayload,
-    @Param('newsId', ParseIntPipe) newsId: number,
+    @Param('favoriteId', ParseIntPipe) favoriteId: number,
   ) {
-    return this.favoritesService.removeFavorite(user.sub, newsId);
+    return this.favoritesService.removeFavorite(user.sub, favoriteId);
   }
 
   @Get()

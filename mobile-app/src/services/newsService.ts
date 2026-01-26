@@ -1,5 +1,5 @@
 import api from "./api";
-import { NewsData, NewsType, PaginatedResponse } from "../types/news";
+import { NewsType} from "../types/news";
 import { NewsDetail } from "../types/newsDetail";
 
 export interface FetchNewsParams {

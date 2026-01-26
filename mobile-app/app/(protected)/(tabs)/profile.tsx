@@ -1,4 +1,5 @@
 import { AuthContext } from "@/src/context/AuthContext";
+import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
 import { useContext } from "react";
@@ -7,13 +8,34 @@ import {
   Text,
   StyleSheet,
   View,
-  ImageBackground,
+  Image,
   ScrollView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
   const { logOut, user } = useContext(AuthContext);
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: () => logOut(),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -26,31 +48,24 @@ export default function Profile() {
           <Text style={styles.subtitle}>Manage your account settings</Text>
         </View>
         <View style={styles.profileSection}>
-          <View style={styles.profileImageContainer}>
-            <ImageBackground
-              source={{
-                uri: user?.profileImageUrl || "https://via.placeholder.com/150",
-              }}
+          {user?.profileImageUrl ? (
+            <Image
+              source={{ uri: user.profileImageUrl }}
               style={styles.profileImage}
-              imageStyle={{ borderRadius: 50 }}
-            >
-              <Pressable
-                style={styles.editIcon}
-                onPress={() => console.log("edit button pressed")}
-              >
-                <MaterialIcons name="edit" size={16} color="#FFFFFF" />
-              </Pressable>
-            </ImageBackground>
-          </View>
+            />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <Feather name="user" size={48} color="#2563EB" />
+            </View>
+          )}
+
           <View style={styles.profileInfo}>
-            <Text style={styles.username}>{user?.fullName || "Rümeysa"}</Text>
-            <Text style={styles.email}>
-              {user?.email || "rumeysa@mail.com"}
-            </Text>
+            <Text style={styles.username}>{user?.fullName}</Text>
+            <Text style={styles.email}>{user?.email}</Text>
           </View>
           <Pressable
             style={styles.editButton}
-            onPress={() => router.push({ pathname: "/profile" })}
+            onPress={() => router.push({ pathname: "../profile/edit-profile" })}
           >
             <Text style={styles.editButtonText}>Edit Profile</Text>
             <MaterialIcons name="chevron-right" size={18} color="#007AFF" />
@@ -58,13 +73,25 @@ export default function Profile() {
         </View>
         <ProfileSection title="CONTENT" />
         <View style={styles.optionsContainer}>
-          <ProfileOption title="Saved News" icon="bookmark-border" onPress={() => router.push({
-            pathname: "/favorites"
-          })}/>
+          <ProfileOption
+            title="Saved News"
+            icon="bookmark-border"
+            onPress={() =>
+              router.push({
+                pathname: "/favorites",
+              })
+            }
+          />
           <ProfileOption title="Topics & Interests" icon="interests" />
-          <ProfileOption title="Reading History" icon="history" onPress={() => router.push({
-            pathname: "../profile/reading-history"
-          })}/>
+          <ProfileOption
+            title="Reading History"
+            icon="history"
+            onPress={() =>
+              router.push({
+                pathname: "../profile/reading-history",
+              })
+            }
+          />
         </View>
         <ProfileSection title="PREFERENCES" />
         <View style={styles.optionsContainer}>
@@ -77,7 +104,7 @@ export default function Profile() {
           <ProfileOption title="Privacy & Security" icon="lock-outline" />
           <ProfileOption title="AI Features" icon="auto-awesome" />
         </View>
-        <Pressable onPress={logOut} style={styles.logoutButton}>
+        <Pressable onPress={handleLogout} style={styles.logoutButton}>
           <MaterialIcons name="logout" size={20} color="#EF4444" />
           <Text style={styles.logoutText}>Log Out</Text>
         </Pressable>
@@ -116,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingBottom: 32, // logout'un altı kesilmesin
+    paddingBottom: 32,
   },
   header: {
     paddingHorizontal: 20,
@@ -149,9 +176,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
   },
-
-  profileImageContainer: {
-    position: "relative",
+  placeholderImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 2,
+    borderColor: "#DBEAFE",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   profileImage: {
     width: 100,
@@ -172,7 +210,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#FFFFFF",
   },
-
   profileInfo: {
     flex: 1,
     marginLeft: 16,

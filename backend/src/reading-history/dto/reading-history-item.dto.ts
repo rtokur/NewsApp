@@ -1,18 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { News } from "src/news/entities/news.entity";
+import { NewsItemDto } from "./news-item.dto";
 export class ReadingHistoryItemDto {
   @ApiProperty()
   id: number;
 
   @ApiProperty()
-  userId: number;
-
-  @ApiProperty()
-  newsId: number;
-
-  @ApiProperty()
   readAt: Date;
 
-  @ApiProperty({ type: News })
-  news: News;
+  @ApiProperty({ type: NewsItemDto })
+  news: NewsItemDto;
 }

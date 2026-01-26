@@ -43,7 +43,3 @@ export async function forgotPasswordRequest(data: ForgotPasswordRequest) {
   return null;
 }
 
-export async function meRequest(): Promise<User> {
-  const response = await api.get("/v1/users/me");
-  return response.data;
-}

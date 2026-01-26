@@ -1,14 +1,15 @@
 import { AuthContext } from "@/src/context/AuthContext";
 import { Redirect, Stack } from "expo-router";
 import { useContext } from "react";
+import { ActivityIndicator } from "react-native";
 
 export default function ProtectedLayout() {
   const { isLoggedIn } = useContext(AuthContext);
   const { initialized } = useContext(AuthContext);
 
   if (!initialized) {
-    return null;
-  }
+    return <ActivityIndicator />;
+  }  
 
   if (!isLoggedIn) {
     return <Redirect href="/login" />;
@@ -24,7 +25,14 @@ export default function ProtectedLayout() {
           headerShown: false,
         }}
       />
-      <Stack.Screen name="profile/reading-history" options={{ headerShown: false }} />
+      <Stack.Screen 
+      name="profile/reading-history" 
+      options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+      name="profile/edit-profile"
+      options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

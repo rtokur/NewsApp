@@ -9,7 +9,7 @@ const BASE_URL =
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 5000,
 });
 
 let isRefreshing = false;
@@ -48,6 +48,9 @@ async function refreshTokenRequest(): Promise<string> {
 api.interceptors.request.use(
   async (config) => {
     try {
+      if (config.url?.includes("/auth/refresh")) {
+        return config;
+      }
       const token = await getAccessToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -68,6 +71,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest.url?.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
     if (error.response?.status === 401 && !originalRequest._retry) {
       if(isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -96,7 +102,9 @@ api.interceptors.response.use(
         await clearTokens();
         await AsyncStorage.removeItem("rememberMe");
 
-        router.replace("/login");
+        if (router.canGoBack()) {
+          router.replace("/login");
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

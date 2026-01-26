@@ -1,10 +1,15 @@
 import { router } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
-import { loginRequest, meRequest, registerRequest } from "../services/authService";
+import { loginRequest, registerRequest } from "../services/authService";
+import { getMyProfile } from "../services/userService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setAccesssToken, getAccessToken, clearTokens, setRefreshToken } from "../utils/storage";
+import {
+  setAccesssToken,
+  getAccessToken,
+  clearTokens,
+  setRefreshToken,
+} from "../utils/storage";
 import { User } from "../types/user";
-import { getItem } from "expo-secure-store";
 
 type AuthContextType = {
   user: User | null;
@@ -15,6 +20,7 @@ type AuthContextType = {
   register: (email: string, password: string, fullName: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   logOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -26,7 +32,8 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   forgotPassword: async () => {},
   logOut: async () => {},
-})
+  refreshUser: async () => {},
+});
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -36,34 +43,62 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("AUTH CHECK START");
+
       try {
         const shouldRemember = await AsyncStorage.getItem("rememberMe");
-        const token = await getAccessToken();
-  
+        console.log("rememberMe value:", shouldRemember);
+
         if (shouldRemember !== "true") {
-          await clearTokens();
+          console.log("Remember me disabled, skipping auth check");
           setIsLoggedIn(false);
           setUser(null);
+          setInitialized(true);
           return;
-        } 
-        if (token) {
-          const me = await meRequest();
-          setUser(me);
-          setIsLoggedIn(true);
-          router.replace("/");
         }
-      } catch (error) {
-        console.error("Auth check failed", error);
+
+        const token = await getAccessToken();
+        console.log("Access token exists:", Boolean(token));
+
+        if (!token) {
+          console.log("No token found, clearing auth state");
+          await AsyncStorage.removeItem("rememberMe");
+          setIsLoggedIn(false);
+          setUser(null);
+          setInitialized(true);
+          return;
+        }
+
+        console.log("Fetching user profile");
+        const me = await getMyProfile();
+        console.log("User profile loaded:", me?.email);
+
+        setUser(me);
+        setIsLoggedIn(true);
+      } catch (error: any) {
+        console.error(
+          "Auth check error:",
+          error?.response?.status,
+          error?.message
+        );
+
+        if (error?.response?.status === 401) {
+          console.log("Token invalid or expired, clearing auth data");
+          await clearTokens();
+          await AsyncStorage.removeItem("rememberMe");
+        }
+
         setIsLoggedIn(false);
         setUser(null);
       } finally {
+        console.log("Auth check completed");
         setInitialized(true);
       }
     };
-  
+
     checkAuth();
   }, []);
-  
+
   const logIn = async (
     email: string,
     password: string,
@@ -71,79 +106,123 @@ export function AuthProvider({ children }: PropsWithChildren) {
   ) => {
     try {
       setLoading(true);
-  
+      console.log("Login started");
+
       const response = await loginRequest({ email, password });
-  
+      console.log("Login response received");
+
       if (!response?.accessToken) {
         throw new Error("INVALID_CREDENTIALS");
       }
-  
+
       await setAccesssToken(response.accessToken);
-      await setRefreshToken(response.refreshToken);      
-      await AsyncStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-      const me = await meRequest();
+      await setRefreshToken(response.refreshToken);
+      await AsyncStorage.setItem(
+        "rememberMe",
+        rememberMe ? "true" : "false"
+      );
+
+      console.log("Tokens stored, fetching user profile");
+
+      const me = await getMyProfile();
+      console.log("User profile fetched");
+
       setUser(me);
       setIsLoggedIn(true);
       router.replace("/");
-    } catch (error) {
+    } catch (error: any) {
+      console.error(
+        "Login error:",
+        error?.response?.status,
+        error?.message
+      );
       setIsLoggedIn(false);
       throw error;
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const register = async (
     email: string,
     password: string,
-    fullName: string,
+    fullName: string
   ) => {
     try {
       setLoading(true);
-  
+      console.log("Registration started");
+
       await registerRequest({ email, password, fullName });
+      console.log("Registration successful");
 
-      setIsLoggedIn(true);
-      router.back();
-    } catch (error) {
-      setIsLoggedIn(false);
+      router.replace("/login");
+    } catch (error: any) {
+      console.error(
+        "Registration error:",
+        error?.response?.status,
+        error?.message
+      );
       throw error;
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  const forgotPassword = async (
-    email: string,
-  ) => {
+  const forgotPassword = async (email: string) => {
     try {
       setLoading(true);
-  
-      //await forgotPasswordRequest({email});
+      console.log("Forgot password request started");
 
-      setIsLoggedIn(true);
+      // await forgotPasswordRequest({ email });
+
       router.back();
-    } catch (error) {
-      setIsLoggedIn(false);
+    } catch (error: any) {
+      console.error(
+        "Forgot password error:",
+        error?.response?.status,
+        error?.message
+      );
       throw error;
     } finally {
       setLoading(false);
     }
-  }
-
+  };
 
   const logOut = async () => {
+    console.log("Logout initiated");
     await clearTokens();
     await AsyncStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
     setUser(null);
-    router.replace("/login")
-  }
+    router.replace("/login");
+  };
+
+  const refreshUser = async () => {
+    try {
+      console.log("Refreshing user data");
+      const me = await getMyProfile();
+      setUser(me);
+      console.log("User data refreshed");
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{user, isLoggedIn, loading, initialized, logIn, register, forgotPassword,logOut}}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoggedIn,
+        loading,
+        initialized,
+        logIn,
+        register,
+        forgotPassword,
+        logOut,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
-

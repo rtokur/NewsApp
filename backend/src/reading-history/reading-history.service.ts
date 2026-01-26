@@ -4,7 +4,8 @@ import { News } from "src/news/entities/news.entity";
 import { User } from "src/users/entities/user.entity";
 import { Repository } from "typeorm";
 import { ReadingHistory } from "./entities/reading-history.entity";
-import { log } from "console";
+import { ReadingHistoryListResponseDto } from "./dto/reading-history-list-response.dto";
+import { RedisService } from "src/redis/redis.service";
 
 @Injectable()
 export class ReadingHistoryService {
@@ -17,6 +18,8 @@ export class ReadingHistoryService {
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    private readonly redisService: RedisService,
   ) {}
 
   async markAsRead(userId: number, newsId: number) {
@@ -45,6 +48,8 @@ export class ReadingHistoryService {
     });
 
     await this.historyRepo.save(history);
+    await this.redisService.delByPattern(`reading-history:${userId}:*`);
+
     return ({ success: true });
   }
 
@@ -55,6 +60,15 @@ export class ReadingHistoryService {
       categoryId?: number,
       search?: string,
   ) {
+    const cacheKey = `reading-history:${userId}:${limit}:${cursor || 'none'}:${categoryId || 'none'}:${search || 'none'}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      console.log('FROM REDIS');
+      return JSON.parse(cached);
+    }
+
+    console.log('FROM POSTGRES');
+
     const qb = this.historyRepo
       .createQueryBuilder('history')
       .innerJoin('history.user', 'user')
@@ -88,13 +102,16 @@ export class ReadingHistoryService {
   
     const hasNextPage = results.length > limit;
     const items = hasNextPage ? results.slice(0, limit) : results;
-  
-    return {
+    const result = {
       items: items.map(this.mapToDto),
       nextCursor: hasNextPage
         ? items[items.length - 1].readAt.toISOString()
-        : null,
-    };
+        : null, 
+    }
+
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300); 
+    
+    return result;
   }  
 
   async removeFromHistory(userId: number, newsId: number) {
@@ -106,6 +123,8 @@ export class ReadingHistoryService {
     if (result.affected === 0) {
       throw new NotFoundException();
     }
+    
+    await this.redisService.delByPattern(`reading-history:${userId}:*`);
 
     return { success: true };
   }
