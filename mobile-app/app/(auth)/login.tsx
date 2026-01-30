@@ -14,41 +14,34 @@ import { router } from "expo-router";
 import Feather from "@expo/vector-icons/Feather";
 import ErrorMessage from "@/src/components/ui/ErrorMessage";
 import AuthInput from "@/src/components/auth/AuthInput";
+import { Controller, useForm } from "react-hook-form";
+import { LoginFormData, loginSchema } from "@/src/validators/login.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ScrollView } from "react-native";
 
 export default function LoginScreen() {
   const { logIn, loading } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [secure, setSecure] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
+  const {
+    control,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const rememberMe = watch("rememberMe");
+
+  const onSubmit = async (data: LoginFormData) => {
     setError(null);
 
-    if (!email || !password) {
-      setError("Email and password are required");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("The password must be at least 6 characters long");
-      return;
-    }
-
     try {
-      await logIn(email, password, rememberMe);
-    } catch (err: any) {
-      if (err?.response?.status === 401) {
-        setError("Email or password is incorrect");
-      } else {
-        setError("An error occurred, please try again.");
-      }
+      await logIn(data.email, data.password, data.rememberMe || false);
+    } catch {
+      setError("Invalid email or password");
     }
   };
 
@@ -57,73 +50,101 @@ export default function LoginScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
       >
         <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Log in</Text>
-            <Text style={styles.subtitle}>
-              Enter your email and password to securely access your account and
-              manage your services.
-            </Text>
-          </View>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Text style={styles.title}>Log in</Text>
+              <Text style={styles.subtitle}>
+                Enter your email and password to securely access your account
+                and manage your services.
+              </Text>
+            </View>
 
-          <View style={styles.form}>
-            <AuthInput
-              label="Email"
-              icon="mail"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="example@email.com"
-              keyboardType="email-address"
-            />
+            <View style={styles.form}>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Email"
+                    icon="mail"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="example@email.com"
+                    keyboardType="email-address"
+                  />
+                )}
+              />
+              {errors.email && (
+                <ErrorMessage message={errors.email.message || null} />
+              )}
 
-            <AuthInput
-              label="Password"
-              icon="lock"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••"
-              secure={!secure}
-            />
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Password"
+                    icon="lock"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="••••••"
+                    secure
+                  />
+                )}
+              />
+              {errors.password && (
+                <ErrorMessage message={errors.password.message || null} />
+              )}
+              <ErrorMessage message={error} />
 
-            <ErrorMessage message={error} />
-
-            <View style={styles.optionsRow}>
-              <Pressable
-                style={styles.rememberMe}
-                onPress={() => setRememberMe(!rememberMe)}
-              >
-                <View
-                  style={[styles.checkbox, rememberMe && styles.checkboxActive]}
+              <View style={styles.optionsRow}>
+                <Pressable
+                  style={styles.rememberMe}
+                  onPress={() => setValue("rememberMe", !rememberMe)}
                 >
-                  {rememberMe && (
-                    <Feather name="check" size={14} color="#fff" />
-                  )}
-                </View>
-                <Text style={styles.optionText}>Remember Me</Text>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      rememberMe && styles.checkboxActive,
+                    ]}
+                  >
+                    {rememberMe && (
+                      <Feather name="check" size={14} color="#fff" />
+                    )}
+                  </View>
+                  <Text style={styles.optionText}>Remember Me</Text>
+                </Pressable>
+
+                <Pressable onPress={() => router.push("/forgot-password")}>
+                  <Text style={styles.forgotText}>Forgot Password</Text>
+                </Pressable>
+              </View>
+
+              <Pressable
+                style={[
+                  styles.button,
+                  (loading || isSubmitting) && { opacity: 0.6 },
+                ]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={loading || isSubmitting}
+              >
+                <Text style={styles.buttonText}>Login</Text>
               </Pressable>
 
-              <Pressable onPress={() => router.push("/forgot-password")}>
-                <Text style={styles.forgotText}>Forgot Password</Text>
-              </Pressable>
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don’t have an account?</Text>
+                <Pressable onPress={() => router.push("/register")}>
+                  <Text style={styles.register}> Register</Text>
+                </Pressable>
+              </View>
             </View>
-
-            <Pressable
-              style={[styles.button, loading && { opacity: 0.6 }]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </Pressable>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don’t have an account?</Text>
-              <Pressable onPress={() => router.push("/register")}>
-                <Text style={styles.register}> Register</Text>
-              </Pressable>
-            </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
     </Pressable>
@@ -208,6 +229,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
+    marginBottom: 30,
   },
   footerText: {
     color: "#666",

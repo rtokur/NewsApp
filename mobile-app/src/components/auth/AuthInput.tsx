@@ -10,6 +10,7 @@ type Props = {
   placeholder?: string;
   secure?: boolean;
   keyboardType?: "default" | "email-address";
+  editable?: boolean;
 };
 
 export default function AuthInput({
@@ -20,6 +21,7 @@ export default function AuthInput({
   placeholder,
   secure = false,
   keyboardType = "default",
+  editable = true,
 }: Props) {
   const [isSecure, setIsSecure] = useState(secure);
 
@@ -39,6 +41,7 @@ export default function AuthInput({
           keyboardType={keyboardType}
           autoCapitalize="none"
           style={styles.input}
+          editable={editable}
         />
 
         {secure && (

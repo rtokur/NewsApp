@@ -225,7 +225,6 @@ export default function EditProfileScreen() {
           >
             <View style={styles.imageSection}>
               <View style={styles.imageContainer}>
-                <Pressable onPress={pickImage}>
                 {profileImage ? (
                   <Image
                     source={{ uri: profileImage }}
@@ -237,7 +236,6 @@ export default function EditProfileScreen() {
                     <Feather name="user" size={48} color="#2563EB" />
                   </View>
                 )}
-                </Pressable>
               </View>
               
               <Pressable 
@@ -296,7 +294,7 @@ export default function EditProfileScreen() {
                 <Feather name="chevron-right" size={20} color="#999" />
               </View>
 
-              <Pressable style={styles.settingItem} onPress={() => {
+              <Pressable style={styles.settingItem} onPress={() => {router.push('/(protected)/profile/change-password')
               }}>
                 <View style={styles.settingLeft}>
                   <View style={styles.settingIconContainer}>
@@ -341,10 +339,7 @@ export default function EditProfileScreen() {
                     <Text style={styles.saveButtonText}>Saving...</Text>
                   </>
                 ) : (
-                  <>
-                    <Feather name="save" size={20} color="#fff" />
                     <Text style={styles.saveButtonText}>Save Changes</Text>
-                  </>
                 )}
               </Pressable>
 
@@ -476,7 +471,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   section: {
-    marginTop: 24,
+    marginTop: 15,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -492,7 +487,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#f0f0f0",
-    marginVertical: 15,
+    marginVertical: 20,
   },
   settingItem: {
     flexDirection: "row",

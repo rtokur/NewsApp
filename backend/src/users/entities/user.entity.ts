@@ -23,7 +23,12 @@ export class User {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+  
+  @Column({ nullable: true, default: null })
+  resetPasswordToken?: string;
 
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  resetPasswordExpires?: Date;
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

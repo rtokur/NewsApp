@@ -106,7 +106,7 @@ export default function FavoritesScreen() {
     if (!initialLoading) {
       const timer = setTimeout(() => {
         setShowSkeleton(false);
-      }, 300);
+      }, 100);
 
       return () => clearTimeout(timer);
     }

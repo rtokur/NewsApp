@@ -14,16 +14,7 @@ export default function AuthLayout() {
       <Stack.Screen
         name="register"
         options={{
-          headerShown: true,
-          headerTitle: "",
-          headerLeft: () => (
-            <CircleButton
-              icon="arrow-back-ios-new"
-              iconType="material"
-              onPress={() => router.back()}
-              style={{ marginBottom: 10 }}
-            />
-          ),
+          headerShown: false,
         }}
       />
 
@@ -40,6 +31,13 @@ export default function AuthLayout() {
               style={{ marginBottom: 10 }}
             />
           ),
+        }}
+      />
+
+      <Stack.Screen
+        name="reset-password"
+        options={{
+          headerShown: false,
         }}
       />
     </Stack>

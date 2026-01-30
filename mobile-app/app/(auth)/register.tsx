@@ -6,6 +6,9 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Touchable,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useContext, useState } from "react";
@@ -13,109 +16,172 @@ import { AuthContext } from "@/src/context/AuthContext";
 import { router } from "expo-router";
 import AuthInput from "@/src/components/auth/AuthInput";
 import ErrorMessage from "@/src/components/ui/ErrorMessage";
+import {
+  RegisterFormData,
+  registerSchema,
+} from "@/src/validators/register.schema";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ScrollView } from "react-native";
+import { CircleButton } from "@/src/components/ui/CircleButton";
 
 export default function RegisterScreen() {
   const { register, loading } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+
   const [error, setError] = useState<string | null>(null);
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  });
 
-  const handleRegister = async () => {
+  const onSubmit = async (data: RegisterFormData) => {
     setError(null);
-    if (!email || !password || !fullName) {
-      setError("Email and password are required");
-      return;
-    }
-
-    if (confirmPassword !== password) {
-      setError("The passwords must be the same");
-      return;
-    }
 
     try {
-      await register(email, password, fullName);
+      await register(data.email, data.password, data.fullName);
+
+      Alert.alert(
+        "Registration Successful",
+        "Your account has been created successfully.",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
     } catch (err: any) {
-      if (err?.response?.status === 401) {
-        setError("Email or password is incorrect");
+      if (err?.response?.status === 409) {
+        setError("This email is already registered");
+      } else if (err?.response?.status === 400) {
+        setError(err?.response?.data?.message || "Invalid registration data");
       } else {
-        setError("An error occurred, please try again.");
+        setError("An unexpected error occurred, please try again");
       }
     }
   };
 
   return (
-    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
       >
-        <SafeAreaView edges={["left", "right"]} style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>
-              Create a new account to get started and enjoy seamless access to
-              our features.
-            </Text>
-          </View>
-
-          <View style={styles.form}>
-            <AuthInput
-              label="Full Name"
-              icon="user"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Name"
+        <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <CircleButton
+              icon="arrow-back-ios-new"
+              iconType="material"
+              onPress={() => router.back()}
+              style={{ marginBottom: 10 }}
             />
-
-            <AuthInput
-              label="Email"
-              icon="mail"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="example@email.com"
-              keyboardType="email-address"
-            />
-
-            <AuthInput
-              label="Password"
-              icon="lock"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••"
-              secure
-            />
-
-            <AuthInput
-              label="Confirm Password"
-              icon="lock"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="••••••"
-              secure
-            />
-
-            <ErrorMessage message={error} />
-            <Pressable
-              style={[styles.button, loading && { opacity: 0.6 }]}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>Create Account</Text>
-            </Pressable>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account?</Text>
-              <Pressable onPress={() => router.back()}>
-                <Text style={styles.login}> Login</Text>
-              </Pressable>
+            <View style={styles.header}>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>
+                Create a new account to get started and enjoy seamless access to
+                our features.
+              </Text>
             </View>
-          </View>
+
+            <View style={styles.form}>
+              <Controller
+                control={control}
+                name="fullName"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Full Name"
+                    icon="user"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Name"
+                  />
+                )}
+              />
+              {errors.fullName && (
+                <ErrorMessage message={errors.fullName.message || null} />
+              )}
+
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Email"
+                    icon="mail"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="example@email.com"
+                    keyboardType="email-address"
+                  />
+                )}
+              />
+              {errors.email && (
+                <ErrorMessage message={errors.email.message || null} />
+              )}
+
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Password"
+                    icon="lock"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="••••••"
+                    secure
+                  />
+                )}
+              />
+              {errors.password && (
+                <ErrorMessage message={errors.password.message || null} />
+              )}
+
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ field: { onChange, value } }) => (
+                  <AuthInput
+                    label="Confirm Password"
+                    icon="lock"
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="••••••"
+                    secure
+                  />
+                )}
+              />
+              {errors.confirmPassword && (
+                <ErrorMessage
+                  message={errors.confirmPassword.message || null}
+                />
+              )}
+
+              <ErrorMessage message={error} />
+              <Pressable
+                style={[
+                  styles.button,
+                  (loading || isSubmitting) && { opacity: 0.6 },
+                ]}
+                onPress={handleSubmit(onSubmit)}
+                disabled={loading || isSubmitting}
+              >
+                <Text style={styles.buttonText}>Create Account</Text>
+              </Pressable>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account?</Text>
+                <Pressable onPress={() => router.back()}>
+                  <Text style={styles.login}> Login</Text>
+                </Pressable>
+              </View>
+            </View>
+          </ScrollView>
+          </TouchableWithoutFeedback>
         </SafeAreaView>
       </KeyboardAvoidingView>
-    </Pressable>
   );
 }
 
@@ -164,6 +230,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
+    marginBottom: 30,
   },
   footerText: {
     color: "#666",

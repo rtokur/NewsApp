@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
-import { loginRequest, registerRequest } from "../services/authService";
+import { changePasswordRequest, forgotPasswordRequest, loginRequest, registerRequest } from "../services/authService";
 import { getMyProfile } from "../services/userService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -19,6 +19,7 @@ type AuthContextType = {
   logIn: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
@@ -31,6 +32,7 @@ export const AuthContext = createContext<AuthContextType>({
   logIn: async () => {},
   register: async () => {},
   forgotPassword: async () => {},
+  changePassword: async () => {},
   logOut: async () => {},
   refreshUser: async () => {},
 });
@@ -155,7 +157,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await registerRequest({ email, password, fullName });
       console.log("Registration successful");
 
-      router.replace("/login");
     } catch (error: any) {
       console.error(
         "Registration error:",
@@ -173,9 +174,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setLoading(true);
       console.log("Forgot password request started");
 
-      // await forgotPasswordRequest({ email });
+      await forgotPasswordRequest({ email });
 
-      router.back();
     } catch (error: any) {
       console.error(
         "Forgot password error:",
@@ -187,6 +187,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setLoading(false);
     }
   };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      setLoading(true);
+      console.log("Change password request started");
+
+      await changePasswordRequest({ currentPassword, newPassword });
+
+      console.log("Password changed successfully");
+      await logOut();
+      router.replace("/login");
+    } catch (error: any) {
+      console.error(
+        "Change password error:",
+        error?.response?.status,
+        error?.message
+      );
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const logOut = async () => {
     console.log("Logout initiated");
@@ -218,6 +240,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         logIn,
         register,
         forgotPassword,
+        changePassword,
         logOut,
         refreshUser,
       }}

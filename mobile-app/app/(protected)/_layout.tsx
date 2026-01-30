@@ -33,6 +33,10 @@ export default function ProtectedLayout() {
       name="profile/edit-profile"
       options={{ headerShown: false }}
       />
+      <Stack.Screen 
+      name="profile/change-password"
+      options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

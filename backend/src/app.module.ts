@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { ReadingHistoryService } from './reading-history/reading-history.service';
 import { ReadingHistoryController } from './reading-history/reading-history.controller';
 import { ReadingHistoryModule } from './reading-history/reading-history.module';
+import { EmailModule } from './email/email.module';
 import Keyv from 'keyv';
 import KeyvRedis from '@keyv/redis';
 
@@ -60,6 +61,7 @@ import KeyvRedis from '@keyv/redis';
     FavoritesModule,
     UsersModule,
     ReadingHistoryModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
