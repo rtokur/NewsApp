@@ -34,7 +34,9 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(
+    null
+  );
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -52,12 +54,14 @@ export default function EditProfileScreen() {
 
   const pickImage = async () => {
     try {
-      const { status: currentStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
+      const { status: currentStatus } =
+        await ImagePicker.getMediaLibraryPermissionsAsync();
+
       let finalStatus = currentStatus;
 
       if (currentStatus !== ImagePicker.PermissionStatus.GRANTED) {
-        const { status: requestedStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const { status: requestedStatus } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
         finalStatus = requestedStatus;
       }
 
@@ -73,8 +77,8 @@ export default function EditProfileScreen() {
             {
               text: "Open Settings",
               onPress: () => {
-                if (Platform.OS === 'ios') {
-                  Linking.openURL('app-settings:');
+                if (Platform.OS === "ios") {
+                  Linking.openURL("app-settings:");
                 } else {
                   Linking.openSettings();
                 }
@@ -94,12 +98,12 @@ export default function EditProfileScreen() {
 
       if (!result.canceled) {
         const uri = result.assets[0].uri;
-        const filename = uri.split('/').pop() || 'profile.jpg';
+        const filename = uri.split("/").pop() || "profile.jpg";
         const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        const type = match ? `image/${match[1]}` : "image/jpeg";
 
         setProfileImage(uri);
-        
+
         setSelectedImage({
           uri,
           name: filename,
@@ -127,7 +131,7 @@ export default function EditProfileScreen() {
       setLoading(true);
 
       const payload: any = {};
-      
+
       if (fullName.trim() !== user?.fullName) {
         payload.fullName = fullName.trim();
       }
@@ -138,24 +142,20 @@ export default function EditProfileScreen() {
         await refreshUser();
       }
 
-      Alert.alert(
-        "Success", 
-        "Profile updated successfully",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back()
-          }
-        ]
-      );
+      Alert.alert("Success", "Profile updated successfully", [
+        {
+          text: "OK",
+          onPress: () => router.back(),
+        },
+      ]);
     } catch (error: any) {
       console.error("Update profile error:", error);
-      
-      let errorMessage = 'An error occurred while updating profile';
-      
+
+      let errorMessage = "An error occurred while updating profile";
+
       if (error?.response?.data?.message) {
         if (Array.isArray(error.response.data.message)) {
-          errorMessage = error.response.data.message.join(', ');
+          errorMessage = error.response.data.message.join(", ");
         } else {
           errorMessage = error.response.data.message;
         }
@@ -164,7 +164,7 @@ export default function EditProfileScreen() {
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       Alert.alert("Update Failed", errorMessage);
     } finally {
       setLoading(false);
@@ -214,146 +214,163 @@ export default function EditProfileScreen() {
           )}
           {!hasChanges && <View style={{ width: 24 }} />}
         </View>
-        
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            bounces={true}
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}
           >
-            <View style={styles.imageSection}>
-              <View style={styles.imageContainer}>
-                {profileImage ? (
-                  <Image
-                    source={{ uri: profileImage }}
-                    style={styles.profileImage}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={styles.placeholderImage}>
-                    <Feather name="user" size={48} color="#2563EB" />
+            <View style={{ flex: 1 }}>
+              <View style={styles.imageSection}>
+                <View style={styles.imageContainer}>
+                  {profileImage ? (
+                    <Image
+                      source={{ uri: profileImage }}
+                      style={styles.profileImage}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View style={styles.placeholderImage}>
+                      <Feather name="user" size={48} color="#2563EB" />
+                    </View>
+                  )}
+                </View>
+
+                <Pressable
+                  style={styles.cameraButton}
+                  onPress={pickImage}
+                  disabled={loading}
+                >
+                  <Feather name="camera" size={20} color="#fff" />
+                </Pressable>
+
+                <Text style={styles.uploadText}>Tap to change photo</Text>
+
+                {selectedImage && (
+                  <View style={styles.imageBadge}>
+                    <Feather name="check-circle" size={16} color="#10B981" />
+                    <Text style={styles.imageBadgeText}>
+                      New image selected
+                    </Text>
                   </View>
                 )}
               </View>
-              
-              <Pressable 
-                style={styles.cameraButton} 
-                onPress={pickImage}
-                disabled={loading}
-              >
-                <Feather name="camera" size={20} color="#fff" />
-              </Pressable>
-              
-              <Text style={styles.uploadText}>Tap to change photo</Text>
-              
-              {selectedImage && (
-                <View style={styles.imageBadge}>
-                  <Feather name="check-circle" size={16} color="#10B981" />
-                  <Text style={styles.imageBadgeText}>New image selected</Text>
+
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="user" size={18} color="#2563EB" />
+                  <Text style={styles.sectionTitle}>Personal Information</Text>
                 </View>
-              )}
-            </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Feather name="user" size={18} color="#2563EB" />
-                <Text style={styles.sectionTitle}>Personal Information</Text>
+                <AuthInput
+                  label="Full Name"
+                  icon="user"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="Enter your full name"
+                />
               </View>
 
-              <AuthInput
-                label="Full Name"
-                icon="user"
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Enter your full name"
-              />
-            </View>
+              <View style={styles.divider} />
 
-            <View style={styles.divider} />
-
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Feather name="settings" size={18} color="#2563EB" />
-                <Text style={styles.sectionTitle}>Account Settings</Text>
-              </View>
-
-              <View style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <View style={styles.settingIconContainer}>
-                    <Feather name="mail" size={20} color="#2563EB" />
-                  </View>
-                  <View>
-                    <Text style={styles.settingTitle}>Email Address</Text>
-                    <Text style={styles.settingSubtitle}>
-                      Change your email address
-                    </Text>
-                  </View>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="settings" size={18} color="#2563EB" />
+                  <Text style={styles.sectionTitle}>Account Settings</Text>
                 </View>
-                <Feather name="chevron-right" size={20} color="#999" />
-              </View>
 
-              <Pressable style={styles.settingItem} onPress={() => {router.push('/(protected)/profile/change-password')
-              }}>
-                <View style={styles.settingLeft}>
-                  <View style={styles.settingIconContainer}>
-                    <Feather name="lock" size={20} color="#2563EB" />
-                  </View>
-                  <View>
-                    <Text style={styles.settingTitle}>Password</Text>
-                    <Text style={styles.settingSubtitle}>
-                      Change your password
-                    </Text>
-                  </View>
+                <View style={styles.settingItem}>
+                  <Pressable
+                    style={styles.settingLeft}
+                    onPress={() =>
+                      router.push("/(protected)/profile/change-email")
+                    }
+                  >
+                    <View style={styles.settingLeft}>
+                      <View style={styles.settingIconContainer}>
+                        <Feather name="mail" size={20} color="#2563EB" />
+                      </View>
+                      <View>
+                        <Text style={styles.settingTitle}>Email Address</Text>
+                        <Text style={styles.settingSubtitle}>
+                          Change your email address
+                        </Text>
+                      </View>
+                    </View>
+                    <Feather name="chevron-right" size={20} color="#999" />
+                  </Pressable>
                 </View>
-                <Feather name="chevron-right" size={20} color="#999" />
-              </Pressable>
-            </View>
 
-            <View style={styles.infoCard}>
-              <View style={styles.infoIconContainer}>
-                <Feather name="info" size={16} color="#2563EB" />
+                <Pressable
+                  style={styles.settingItem}
+                  onPress={() => {
+                    router.push("/(protected)/profile/change-password");
+                  }}
+                >
+                  <View style={styles.settingLeft}>
+                    <View style={styles.settingIconContainer}>
+                      <Feather name="lock" size={20} color="#2563EB" />
+                    </View>
+                    <View>
+                      <Text style={styles.settingTitle}>Password</Text>
+                      <Text style={styles.settingSubtitle}>
+                        Change your password
+                      </Text>
+                    </View>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#999" />
+                </Pressable>
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>Account Security</Text>
-                <Text style={styles.infoText}>
-                  Changing your email or password will require additional
-                  verification for your account security.
-                </Text>
-              </View>
-            </View>
 
-            <View style={styles.buttonContainer}>
-              <Pressable
-                style={[
-                  styles.saveButton, 
-                  (loading || !hasChanges) && styles.saveButtonDisabled
-                ]}
-                onPress={handleSave}
-                disabled={loading || !hasChanges}
-              >
-                {loading ? (
-                  <>
-                    <ActivityIndicator size="small" color="#fff" />
-                    <Text style={styles.saveButtonText}>Saving...</Text>
-                  </>
-                ) : (
+              <View style={styles.infoCard}>
+                <View style={styles.infoIconContainer}>
+                  <Feather name="info" size={16} color="#2563EB" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoTitle}>Account Security</Text>
+                  <Text style={styles.infoText}>
+                    Changing your email or password will require additional
+                    verification for your account security.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <Pressable
+                  style={[
+                    styles.saveButton,
+                    (loading || !hasChanges) && styles.saveButtonDisabled,
+                  ]}
+                  onPress={handleSave}
+                  disabled={loading || !hasChanges}
+                >
+                  {loading ? (
+                    <>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.saveButtonText}>Saving...</Text>
+                    </>
+                  ) : (
                     <Text style={styles.saveButtonText}>Save Changes</Text>
-                )}
-              </Pressable>
+                  )}
+                </Pressable>
 
-              <Pressable
-                style={styles.cancelButton}
-                onPress={handleCancel}
-                disabled={loading}
-              >
-                <Feather name="x" size={20} color="#666" />
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={handleCancel}
+                  disabled={loading}
+                >
+                  <Feather name="x" size={20} color="#666" />
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
             </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

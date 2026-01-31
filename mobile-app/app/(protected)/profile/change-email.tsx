@@ -12,7 +12,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Touchable,
   TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,103 +20,145 @@ import { Ionicons } from "@expo/vector-icons";
 import { CircleButton } from "@/src/components/ui/CircleButton";
 import { useForm, Controller } from "react-hook-form";
 import {
-  ChangePasswordFormData,
-  changePasswordSchema,
-} from "@/src/validators/change-password.schema";
+  ChangeEmailFormData,
+  changeEmailSchema,
+} from "@/src/validators/change-email.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export default function ChangePasswordScreen() {
-  const { changePassword, loading } = useContext(AuthContext);
+export default function ChangeEmailScreen() {
+  const { user, changeEmail } = useContext(AuthContext);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
+  } = useForm<ChangeEmailFormData>({
+    resolver: zodResolver(changeEmailSchema),
     defaultValues: {
+      newEmail: "",
+      confirmEmail: "",
       currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
     },
   });
 
-  const currentPassword = watch("currentPassword");
-  const newPassword = watch("newPassword");
-  const confirmPassword = watch("confirmPassword");
+  const newEmail = watch("newEmail") || "";
+  const confirmEmail = watch("confirmEmail") || "";
 
-  const onSubmit = async (data: ChangePasswordFormData) => {
+  const onSubmit = async (data: ChangeEmailFormData) => {
     setError(null);
+    setLoading(true);
 
     try {
-      await changePassword(data.currentPassword, data.newPassword);
+      await changeEmail(data.newEmail, data.currentPassword);
 
       Alert.alert(
-        "Success",
-        "Your password has been changed successfully. Please login again with your new password.",
+        "Verification Email Sent",
+        `We've sent a verification link to ${data.newEmail}. Please check your inbox and click the link to complete the email change.\n\nThe link will expire in 24 hours.`,
         [
           {
             text: "OK",
+            onPress: () => router.back(),
           },
         ]
       );
     } catch (err: any) {
       if (err?.response?.status === 401) {
         setError("Current password is incorrect");
+      } else if (err?.response?.status === 409) {
+        setError("This email address is already in use");
       } else if (err?.response?.status === 400) {
-        setError(
-          err?.response?.data?.message ||
-            "New password cannot be the same as current password"
-        );
+        setError(err?.response?.data?.message || "Invalid email address");
       } else {
         setError(
           err?.response?.data?.message || "An error occurred, please try again."
         );
       }
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    router.back();
+  };
+
   return (
-    <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          keyboardDismissMode="none"
         >
-          <TouchableWithoutFeedback
-            onPress={Keyboard.dismiss}
-            accessible={false}
-          >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{ flex: 1 }}>
               <CircleButton
                 icon="arrow-back-ios-new"
                 iconType="material"
-                onPress={() => router.back()}
+                onPress={handleCancel}
                 style={{ marginBottom: 10 }}
               />
 
               <View style={styles.header}>
                 <View style={styles.iconContainer}>
-                  <Ionicons
-                    name="shield-checkmark-outline"
-                    size={64}
-                    color="#2563EB"
-                  />
+                  <Ionicons name="mail-outline" size={64} color="#2563EB" />
                 </View>
-                <Text style={styles.title}>Change Password</Text>
-                <Text style={styles.subtitle}>
-                  Update your password to keep your account secure
-                </Text>
+                <Text style={styles.title}>Change Email</Text>
+                <Text style={styles.subtitle}>Update your email address</Text>
+              </View>
+
+              <View style={styles.currentEmailBox}>
+                <Text style={styles.currentEmailLabel}>Current Email</Text>
+                <Text style={styles.currentEmailText}>{user?.email}</Text>
               </View>
 
               <View style={styles.form}>
+                <Controller
+                  control={control}
+                  name="newEmail"
+                  render={({ field: { onChange, value } }) => (
+                    <AuthInput
+                      label="New Email"
+                      icon="mail"
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="Enter new email"
+                      keyboardType="email-address"
+                      editable={!loading && !isSubmitting}
+                    />
+                  )}
+                />
+                {errors.newEmail && (
+                  <ErrorMessage message={errors.newEmail.message || ""} />
+                )}
+
+                <Controller
+                  control={control}
+                  name="confirmEmail"
+                  render={({ field: { onChange, value } }) => (
+                    <AuthInput
+                      label="Confirm New Email"
+                      icon="mail"
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="Confirm new email"
+                      keyboardType="email-address"
+                      editable={!loading && !isSubmitting}
+                    />
+                  )}
+                />
+                {errors.confirmEmail && (
+                  <ErrorMessage message={errors.confirmEmail.message || ""} />
+                )}
+
+                <View style={styles.divider} />
+
                 <Controller
                   control={control}
                   name="currentPassword"
@@ -127,7 +168,7 @@ export default function ChangePasswordScreen() {
                       icon="lock"
                       value={value}
                       onChangeText={onChange}
-                      placeholder="Enter current password"
+                      placeholder="Enter current password for security"
                       secure
                       editable={!loading && !isSubmitting}
                     />
@@ -139,131 +180,40 @@ export default function ChangePasswordScreen() {
                   />
                 )}
 
-                <View style={styles.divider} />
-
-                <Controller
-                  control={control}
-                  name="newPassword"
-                  render={({ field: { onChange, value } }) => (
-                    <AuthInput
-                      label="New Password"
-                      icon="lock"
-                      value={value}
-                      onChangeText={onChange}
-                      placeholder="Enter new password"
-                      secure
-                      editable={!loading && !isSubmitting}
-                    />
-                  )}
-                />
-                {errors.newPassword && (
-                  <ErrorMessage message={errors.newPassword.message || ""} />
-                )}
-
-                <Controller
-                  control={control}
-                  name="confirmPassword"
-                  render={({ field: { onChange, value } }) => (
-                    <AuthInput
-                      label="Confirm New Password"
-                      icon="lock"
-                      value={value}
-                      onChangeText={onChange}
-                      placeholder="Confirm new password"
-                      secure
-                      editable={!loading && !isSubmitting}
-                    />
-                  )}
-                />
-                {errors.confirmPassword && (
-                  <ErrorMessage
-                    message={errors.confirmPassword.message || ""}
-                  />
-                )}
-
                 <View style={styles.requirements}>
-                  <Text style={styles.requirementsTitle}>
-                    Password Requirements:
-                  </Text>
                   <View style={styles.requirementItem}>
                     <Ionicons
                       name={
-                        newPassword && newPassword.length >= 8
+                        newEmail && confirmEmail && newEmail === confirmEmail
                           ? "checkmark-circle"
                           : "ellipse-outline"
                       }
                       size={16}
                       color={
-                        newPassword && newPassword.length >= 8
+                        newEmail && confirmEmail && newEmail === confirmEmail
+                          ? "#22C55E"
+                          : "#999"
+                      }
+                    />
+                    <Text style={styles.requirementText}>Emails match</Text>
+                  </View>
+                  <View style={styles.requirementItem}>
+                    <Ionicons
+                      name={
+                        newEmail && user?.email && newEmail !== user.email
+                          ? "checkmark-circle"
+                          : "ellipse-outline"
+                      }
+                      size={16}
+                      color={
+                        newEmail && user?.email && newEmail !== user.email
                           ? "#22C55E"
                           : "#999"
                       }
                     />
                     <Text style={styles.requirementText}>
-                      At least 8 characters
+                      Different from current email
                     </Text>
-                  </View>
-                  <View style={styles.requirementItem}>
-                    <Ionicons
-                      name={
-                        newPassword &&
-                        /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
-                      }
-                      size={16}
-                      color={
-                        newPassword &&
-                        /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)
-                          ? "#22C55E"
-                          : "#999"
-                      }
-                    />
-                    <Text style={styles.requirementText}>
-                      Contains uppercase, lowercase, and number
-                    </Text>
-                  </View>
-                  <View style={styles.requirementItem}>
-                    <Ionicons
-                      name={
-                        newPassword &&
-                        currentPassword &&
-                        newPassword !== currentPassword
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
-                      }
-                      size={16}
-                      color={
-                        newPassword &&
-                        currentPassword &&
-                        newPassword !== currentPassword
-                          ? "#22C55E"
-                          : "#999"
-                      }
-                    />
-                    <Text style={styles.requirementText}>
-                      Different from current password
-                    </Text>
-                  </View>
-                  <View style={styles.requirementItem}>
-                    <Ionicons
-                      name={
-                        newPassword &&
-                        confirmPassword &&
-                        newPassword === confirmPassword
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
-                      }
-                      size={16}
-                      color={
-                        newPassword &&
-                        confirmPassword &&
-                        newPassword === confirmPassword
-                          ? "#22C55E"
-                          : "#999"
-                      }
-                    />
-                    <Text style={styles.requirementText}>Passwords match</Text>
                   </View>
                 </View>
 
@@ -279,8 +229,8 @@ export default function ChangePasswordScreen() {
                 >
                   <Text style={styles.buttonText}>
                     {loading || isSubmitting
-                      ? "Changing..."
-                      : "Change Password"}
+                      ? "Sending Verification..."
+                      : "Change Email"}
                   </Text>
                 </Pressable>
 
@@ -300,15 +250,17 @@ export default function ChangePasswordScreen() {
                   color="#2563EB"
                 />
                 <Text style={styles.infoText}>
-                  After changing your password, you'll be logged out and need to
-                  login again with your new password.
+                  For security, we'll send a verification link to your new email
+                  address. You'll also receive a notification at your current
+                  email. The change will be completed once you verify the new
+                  email.
                 </Text>
               </View>
             </View>
           </TouchableWithoutFeedback>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -322,7 +274,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   iconContainer: {
     width: 120,
@@ -346,13 +298,33 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginHorizontal: 20,
   },
+  currentEmailBox: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  currentEmailLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 4,
+    textTransform: "uppercase",
+  },
+  currentEmailText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#111111",
+  },
   form: {
     marginVertical: 10,
   },
   divider: {
     height: 1,
     backgroundColor: "#E5E7EB",
-    marginVertical: 10,
+    marginVertical: 16,
   },
   requirements: {
     backgroundColor: "#F9FAFB",
@@ -360,12 +332,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     marginTop: 10,
-  },
-  requirementsTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-    marginBottom: 12,
   },
   requirementItem: {
     flexDirection: "row",

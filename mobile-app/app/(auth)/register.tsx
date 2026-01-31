@@ -60,17 +60,22 @@ export default function RegisterScreen() {
   };
 
   return (
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <ScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="always"
+          showsVerticalScrollIndicator={false}
+          keyboardDismissMode="none"
+        >
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}
           >
+            <View style={{ flex: 1 }}>
             <CircleButton
               icon="arrow-back-ios-new"
               iconType="material"
@@ -178,10 +183,11 @@ export default function RegisterScreen() {
                 </Pressable>
               </View>
             </View>
-          </ScrollView>
+            </View>
           </TouchableWithoutFeedback>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

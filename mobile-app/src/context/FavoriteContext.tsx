@@ -9,28 +9,29 @@ import api from "../services/api";
 import { AuthContext } from "./AuthContext";
 
 type FavoritesContextType = {
-  favorites: Set<number>;
+  favorites: Map<number, number>;
   toggleFavorite: (newsId: number) => Promise<void>;
   isFavorite: (newsId: number) => boolean;
   initialized: boolean;
 };
 
 export const FavoriteContext = createContext<FavoritesContextType>({
-  favorites: new Set(),
+  favorites: new Map(),
   toggleFavorite: async () => {},
   isFavorite: () => false,
   initialized: false,
 });
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [favorites, setFavorites] = useState<Map<number, number>>(new Map());
   const [initialized, setInitialized] = useState(false);
-
+  const [loading, setLoading] = useState(false);
+  
   const { isLoggedIn } = useContext(AuthContext);
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setFavorites(new Set());
+      setFavorites(new Map());
       setInitialized(true);
       return;
     }
@@ -38,20 +39,24 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setInitialized(false);
 
     api
-      .get("v1/favorites")
-      .then((response) => {
-        const favIds = new Set<number>(
-          response.data.items.map((item: any) => Number(item.news.id))
-        );
-        setFavorites(favIds);
+    .get("v1/favorites")
+    .then((res) => {
+      const map = new Map<number, number>();
+      res.data.items.forEach((item: any) => {
+        map.set(Number(item.news.id), Number(item.id));
+      });
+      setFavorites(map);
+    })
+      .catch((err) => {
+        if (err.response) {
+          console.log(
+            "Backend Hata Mesajı:",
+            JSON.stringify(err.response.data, null, 2)
+          );
+        } else {
+          console.log("Bağlantı Hatası:", err.message);
+        }
       })
-.catch((err) => {
-  if (err.response) {
-      console.log("Backend Hata Mesajı:", JSON.stringify(err.response.data, null, 2));
-  } else {
-      console.log("Bağlantı Hatası:", err.message);
-  }
-})
       .finally(() => {
         setInitialized(true);
       });
@@ -60,42 +65,48 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const isFavorite = useCallback(
     (newsId: number) => {
       return favorites.has(Number(newsId));
-    },
-    [favorites]
-  );
+    }, [favorites]);
 
   const toggleFavorite = useCallback(
     async (newsId: number) => {
-      const id = Number(newsId);
-      const isSaved = favorites.has(id);
+      if (loading) return;
 
-      setFavorites((prev) => {
-        const next = new Set(prev);
-        isSaved ? next.delete(id) : next.add(id);
-        return next;
-      });
+      const id = Number(newsId);
+      const favoriteId = favorites.get(id);
+      setLoading(true);
 
       try {
-        if (isSaved) {
-          await api.delete(`v1/favorites/${id}`);
+        if (favoriteId) {
+          setFavorites((prev) => {
+            const next = new Map(prev);
+            next.delete(id);
+            return next;
+          });
+          await api.delete(`v1/favorites/${favoriteId}`);
         } else {
-          await api.post(`v1/favorites/${id}`, {});
+          const response = await api.post(`v1/favorites/${id}`);
+          const newFavoriteId = response.data.id;
+          setFavorites((prev) => 
+            new Map(prev).set(id, newFavoriteId)
+          );
         }
       } catch (error: any) {
-        setFavorites((prev) => {
-          const next = new Set(prev);
-          isSaved ? next.add(id) : next.delete(id);
-          return next;
+        const response = await api.get("v1/favorites");
+        const map = new Map<number, number>();
+        response.data.items.forEach((item: any) => {
+          map.set(Number(item.news.id), Number(item.id));
         });
+        setFavorites(map);
         if (error?.response) {
           console.log("Backend Hata Mesajı:", JSON.stringify(error.response.data, null, 2));
         } else {
           console.log("Bağlantı Hatası:", error?.message);
         }
-        throw error;
+      } finally {
+        setLoading(false);
       }
     },
-    [favorites]
+    [favorites, loading]
   );
 
   return (

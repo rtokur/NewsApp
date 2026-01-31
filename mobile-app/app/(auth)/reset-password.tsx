@@ -27,7 +27,6 @@ import {
   resetPasswordSchema,
 } from "@/src/validators/reset-password.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleButton } from "@/src/components/ui/CircleButton";
 
 export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams<{ token?: string }>();

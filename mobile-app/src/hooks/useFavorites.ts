@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NewsData } from "../types/news";
 import { fetchFavorites, removeFavorite } from "../services/favoriteService";
 
@@ -31,13 +31,14 @@ export function useFavorites(
   const loadFavorites = useCallback(
     async (reset: boolean) => {
       if (!reset && loading) return;
-      if (!reset && !hasMore) return;      
+      if (!reset && !hasMore) return;
 
       try {
         setLoading(true);
         setError(null);
 
         const currentCursor = reset ? undefined : cursor ?? undefined;
+
         const response = await fetchFavorites(
           limit,
           currentCursor,
@@ -51,6 +52,7 @@ export function useFavorites(
 
         setData((prev) => {
           if (reset) return mapped;
+
           const unique = mapped.filter(
             (item) =>
               !prev.some(
@@ -74,7 +76,7 @@ export function useFavorites(
 
   useEffect(() => {
     refetch();
-  }, [categoryId, search, sortOrder, limit]); 
+  }, [categoryId, search, sortOrder, limit]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -96,14 +98,22 @@ export function useFavorites(
     );
   }, []);
 
-  const remove = useCallback(async (favoriteId: number) => {
-    try {
-      await removeFavorite(favoriteId);
+  const remove = useCallback(
+    async (favoriteId: number) => {
+      const previousData = data;
       removeLocalItem(favoriteId);
-    } catch (err: any) {
-      throw new Error(err.message ?? "Failed to remove favorite");
-    }
-  }, [removeLocalItem]);
+
+      try {
+        await removeFavorite(favoriteId);
+      } catch (err: any) {
+        setData(previousData);
+        
+        const errorMessage = err?.response?.data?.message || err.message;
+        throw new Error(errorMessage ?? "Failed to remove favorite");
+      }
+    },
+    [data, removeLocalItem]
+  );
 
   return {
     data,

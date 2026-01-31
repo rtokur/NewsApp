@@ -20,6 +20,7 @@ type AuthContextType = {
   register: (email: string, password: string, fullName: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changeEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   logOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
@@ -33,6 +34,7 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   forgotPassword: async () => {},
   changePassword: async () => {},
+  changeEmail: async () => {},
   logOut: async () => {},
   refreshUser: async () => {},
 });
@@ -210,6 +212,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }
 
+  const changeEmail = async (newEmail: string, currentPassword: string) => {
+    console.log("Change email requested for:", newEmail);
+  }
+
   const logOut = async () => {
     console.log("Logout initiated");
     await clearTokens();
@@ -241,6 +247,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         register,
         forgotPassword,
         changePassword,
+        changeEmail,
         logOut,
         refreshUser,
       }}

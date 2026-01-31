@@ -78,3 +78,8 @@ export async function changePasswordRequest(data: changePasswordRequest): Promis
   const response = await api.post("/v1/auth/changePassword", data);
   return response.data;
 }
+
+export async function changeEmailRequest(newEmail: string, currentPassword: string): Promise<{ message: string }> {
+  const response = await api.post("/v1/auth/changeEmail", { newEmail, currentPassword });
+  return response.data;
+}
