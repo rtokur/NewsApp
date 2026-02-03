@@ -27,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function ChangeEmailScreen() {
   const { user, changeEmail } = useContext(AuthContext);
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +61,9 @@ export default function ChangeEmailScreen() {
         [
           {
             text: "OK",
-            onPress: () => router.back(),
+            onPress: () => {
+              router.back();
+            },
           },
         ]
       );

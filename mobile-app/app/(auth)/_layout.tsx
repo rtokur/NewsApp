@@ -40,6 +40,13 @@ export default function AuthLayout() {
           headerShown: false,
         }}
       />
+
+      <Stack.Screen 
+        name="verify-email-change"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

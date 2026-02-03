@@ -10,10 +10,31 @@ export interface UserProfile extends User {
   createdAt?: string;
 }
 
+export interface ChangeEmailRequest {
+  newEmail: string;
+  currentPassword: string;
+}
+
+export interface ChangeEmailResponse {
+  message: string;
+  newEmail: string;
+}
+
+export interface VerifyEmailChangeResponse {
+  message: string;
+  newEmail: string;
+}
+
+export interface PendingEmailChangeResponse {
+  newEmail: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export async function getMyProfile(): Promise<UserProfile> {
   try {
     console.log("Fetching user profile...");
-    const response = await api.get<UserProfile>("/v1/users/me");
+    const response = await api.get<UserProfile>("/v1/users/profile");
     console.log("User profile fetched:", response.data);
     return response.data;
   } catch (error: any) {
@@ -44,7 +65,7 @@ export async function updateProfile(
     console.log('Updating profile...');
     
     const response = await api.patch<{ success: boolean }>(
-      '/v1/users/me/profile',
+      '/v1/users/profile',
       formData,
       {
         headers: {
@@ -77,7 +98,7 @@ export async function updateProfileImage(imageUri: string): Promise<{ success: b
     console.log('Uploading profile image...');
     
     const response = await api.patch<{ success: boolean }>(
-      '/v1/users/me/profile',
+      '/v1/users/profile',
       formData,
       {
         headers: {
@@ -90,6 +111,68 @@ export async function updateProfileImage(imageUri: string): Promise<{ success: b
     return response.data;
   } catch (error: any) {
     console.error('Image upload failed:', error?.response?.data || error?.message);
+    throw error;
+  }
+}
+
+export async function requestEmailChange(
+  data: ChangeEmailRequest
+): Promise<ChangeEmailResponse> {
+  try {
+    console.log('Requesting email change...');
+    const response = await api.post<ChangeEmailResponse>(
+      '/v1/users/email/change-request',
+      data
+    );
+    console.log('Email change requested successfully');
+    return response.data;
+  } catch (error: any) {
+    console.error('Email change request failed:', error?.response?.data || error?.message);
+    throw error;
+  }
+}
+
+export async function verifyEmailChange(
+  token: string
+): Promise<VerifyEmailChangeResponse> {
+  try {
+    console.log('Verifying email change...');
+    const response = await api.post<VerifyEmailChangeResponse>(
+      '/v1/users/email/verify',
+      { token }
+    );
+    console.log('Email change verified successfully');
+    return response.data;
+  } catch (error: any) {
+    console.error('Email change verification failed:', error?.response?.data || error?.message);
+    throw error;
+  }
+}
+
+export async function getPendingEmailChange(): Promise<PendingEmailChangeResponse> {
+  try {
+    console.log('Fetching pending email change...');
+    const response = await api.get<PendingEmailChangeResponse>(
+      '/v1/users/email/pending'
+    );
+    console.log('Pending email change fetched');
+    return response.data;
+  } catch (error: any) {
+    console.error('Get pending email change failed:', error?.response?.data || error?.message);
+    throw error;
+  }
+}
+
+export async function cancelEmailChange(): Promise<{ message: string }> {
+  try {
+    console.log('Cancelling email change...');
+    const response = await api.delete<{ message: string }>(
+      '/v1/users/email/cancel'
+    );
+    console.log('Email change cancelled successfully');
+    return response.data;
+  } catch (error: any) {
+    console.error('Cancel email change failed:', error?.response?.data || error?.message);
     throw error;
   }
 }

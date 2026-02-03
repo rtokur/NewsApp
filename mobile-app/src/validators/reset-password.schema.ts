@@ -2,10 +2,6 @@ import { z } from "zod";
 
 export const resetPasswordSchema = z
   .object({
-    token: z
-      .string()
-      .trim()
-      .min(1, { message: "Token is required" }),
     newPassword: z
       .string()
       .min(8, { message: "Password must be at least 8 characters" })

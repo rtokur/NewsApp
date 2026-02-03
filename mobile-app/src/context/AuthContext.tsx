@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { changePasswordRequest, forgotPasswordRequest, loginRequest, registerRequest } from "../services/authService";
 import { getMyProfile } from "../services/userService";
+import { requestEmailChange } from "../services/userService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   setAccesssToken,
@@ -57,7 +58,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
           console.log("Remember me disabled, skipping auth check");
           setIsLoggedIn(false);
           setUser(null);
-          setInitialized(true);
           return;
         }
 
@@ -69,7 +69,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
           await AsyncStorage.removeItem("rememberMe");
           setIsLoggedIn(false);
           setUser(null);
-          setInitialized(true);
           return;
         }
 
@@ -80,20 +79,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(me);
         setIsLoggedIn(true);
       } catch (error: any) {
-        console.error(
-          "Auth check error:",
-          error?.response?.status,
-          error?.message
-        );
-
-        if (error?.response?.status === 401) {
-          console.log("Token invalid or expired, clearing auth data");
-          await clearTokens();
-          await AsyncStorage.removeItem("rememberMe");
+        if (error.response?.status === 401) {
+          console.log("Session expired or revoked");
+          await silentLogout();
+        } else {
+          console.error("Auth check failed:", error);
         }
-
-        setIsLoggedIn(false);
-        setUser(null);
       } finally {
         console.log("Auth check completed");
         setInitialized(true);
@@ -199,7 +190,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       console.log("Password changed successfully");
       await logOut();
-      router.replace("/login");
     } catch (error: any) {
       console.error(
         "Change password error:",
@@ -213,7 +203,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   const changeEmail = async (newEmail: string, currentPassword: string) => {
-    console.log("Change email requested for:", newEmail);
+    try {
+      setLoading(true);
+      console.log("Change email request started");
+
+      await requestEmailChange({ newEmail, currentPassword });
+
+      console.log("Email change requested successfully");
+    } catch (error: any) {
+      console.error(
+        "Change email error:",
+        error?.response?.status,
+        error?.message
+      );
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   }
 
   const logOut = async () => {
@@ -225,14 +231,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
     router.replace("/login");
   };
 
+  const silentLogout = async () => {
+    await clearTokens();
+    await AsyncStorage.removeItem("rememberMe");
+    setUser(null);
+    setIsLoggedIn(false);
+  };  
+
   const refreshUser = async () => {
     try {
       console.log("Refreshing user data");
       const me = await getMyProfile();
       setUser(me);
       console.log("User data refreshed");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to refresh user data:", error);
+      if (error.response?.status === 401) {
+        console.log("Session expired during refresh");
+        await silentLogout();
+      }
     }
   };
 

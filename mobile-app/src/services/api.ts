@@ -9,7 +9,7 @@ const BASE_URL =
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 5000,
+  timeout: 10000,
 });
 
 let isRefreshing = false;
@@ -71,13 +71,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (originalRequest.url?.includes('/auth/refresh')) {
-      await clearTokens();
-      await AsyncStorage.removeItem("rememberMe");
-      
-      if (router.canGoBack()) {
-        router.replace("/login");
-      }
+    const isAuthEndpoint =
+    originalRequest.url?.includes("/auth/login") ||
+    originalRequest.url?.includes("/auth/register") ||
+    originalRequest.url?.includes("/auth/forgot") ||
+    originalRequest.url?.includes("/auth/change-password");
+  
+    if (isAuthEndpoint || originalRequest.url?.includes('/auth/refresh')) {
       return Promise.reject(error);
     }
 
@@ -105,13 +105,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError: any) {
         processQueue(refreshError, null);
-
-        await clearTokens();
-        await AsyncStorage.removeItem("rememberMe");
-
-        if (router.canGoBack()) {
-          router.replace("/login");
-        }
         
         return Promise.reject(refreshError);
       } finally {

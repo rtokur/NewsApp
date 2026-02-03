@@ -251,4 +251,11 @@ export class AuthService {
 
     return { message: 'Password changed successfully' };
   }
+
+  async verifyPassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
 }

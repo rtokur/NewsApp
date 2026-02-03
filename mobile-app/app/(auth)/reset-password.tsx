@@ -74,11 +74,15 @@ export default function ResetPasswordScreen() {
   };
 
   const onSubmit = async (data: ResetPasswordFormData) => {
+    if (!token) {
+      Alert.alert("Invalid link");
+      return;
+    }
     setError(null);
 
     try {
       await resetPasswordRequest({
-        token: data.token,
+        token: token as string,
         newPassword: data.newPassword,
       });
 
@@ -113,12 +117,15 @@ export default function ResetPasswordScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <SafeAreaView edges={["left", "right", "top"]} style={styles.container}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode="none"
           >
+                      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                      <View style={{ flex: 1 }}>
+
             <View style={styles.header}>
               <View style={styles.iconContainer}>
                 <Ionicons name="key-outline" size={60} color="#2563EB" />
@@ -244,8 +251,9 @@ export default function ResetPasswordScreen() {
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </Pressable>
             </View>
+            </View>
+            </TouchableWithoutFeedback>
           </ScrollView>
-          </TouchableWithoutFeedback>
         </SafeAreaView>
       </KeyboardAvoidingView>
   );

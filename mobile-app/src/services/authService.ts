@@ -79,7 +79,7 @@ export async function changePasswordRequest(data: changePasswordRequest): Promis
   return response.data;
 }
 
-export async function changeEmailRequest(newEmail: string, currentPassword: string): Promise<{ message: string }> {
-  const response = await api.post("/v1/auth/changeEmail", { newEmail, currentPassword });
+export async function verifyEmailChangeRequest(token: string): Promise<{ message: string }> {
+  const response = await api.post("/v1/auth/verifyEmailChange", { token });
   return response.data;
 }
