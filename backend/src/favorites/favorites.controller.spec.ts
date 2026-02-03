@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FavoritesController } from './favorites.controller';
 import { FavoritesService } from './favorites.service';
 import { ExecutionContext } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { GetFavoritesQueryDto } from './dto/get-favorites.query.dto';
 import { SortOrder } from 'src/news/dto/get-news.dto';

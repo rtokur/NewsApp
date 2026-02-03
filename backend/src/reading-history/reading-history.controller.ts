@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ReadingHistoryService } from './reading-history.service';
 import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';

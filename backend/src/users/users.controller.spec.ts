@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Readable } from 'stream';

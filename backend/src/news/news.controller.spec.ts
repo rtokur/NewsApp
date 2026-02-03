@@ -3,7 +3,7 @@ import { NewsController } from './news.controller';
 import { NewsService } from './news.service';
 import { find } from 'rxjs';
 import { ExecutionContext } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 describe('NewsController', () => {
   let controller: NewsController;

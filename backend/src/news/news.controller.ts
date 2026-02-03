@@ -6,7 +6,7 @@ import { NewsListResponseDto } from './dto/news-list-response.dto';
 import { GetNewsDto } from './dto/get-news.dto';
 import { GetHighlightNewsDto } from './dto/get-highlight-news.dto';
 import { NewsResponseDto } from './dto/news-response.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('News')
 @ApiBearerAuth('access-token')
